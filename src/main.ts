@@ -46,7 +46,7 @@ async function boot() {
   const realExample = examplePoint && exampleReference ? `<div class="kiko-example"><strong>Un punto real que hemos podido calcular</strong><p>Nasdaq Composite frente al S&P 500 · semanal · ${formatDate(examplePoint[0])}.<br>Cierre Nasdaq: ${fmt(examplePoint[3])} · cierre S&P 500: ${fmt(exampleReference[1])}.<br>RS = ${fmt(examplePoint[3] / exampleReference[1], 5)}.<br>Con sus medias históricas, el resultado es <strong>X=${fmt(examplePoint[1])}, Y=${fmt(examplePoint[2])}</strong> → ${quadrants[quadrant(examplePoint[1], examplePoint[2])].name}.</p><p>Estas coordenadas salen de nuestra fórmula y del dataset cargado; no son valores obtenidos de StockCharts. El ejemplo se actualiza al actualizar los datos.</p></div>` : '';
 
   const methodologyMarkup = `
-        <details class="method-card top-method" id="methodology" open>
+        <details class="method-card top-method" id="methodology">
           <summary>Kiko, aquí te explico lo que quieres entender jeje <span class="kiko-badge">Empieza por aquí 👀</span><span aria-hidden="true">＋</span></summary>
           <div class="method-content">
             <section class="kiko-explainer" id="para-kiko" aria-labelledby="kiko-heading">
