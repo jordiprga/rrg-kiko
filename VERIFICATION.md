@@ -26,8 +26,8 @@
 - Revisión visual de escritorio y de layout estrecho: configuración plegable, gráficos y tabla disponibles. El navegador integrado limitó el ancho efectivo a aproximadamente 748 px; no se afirma una prueba en un teléfono físico ni una captura real a 390 px.
 - Consola revisada sin errores ni advertencias durante las interacciones comprobadas.
 
-## Dependencias pendientes de la entrega pública
+## Estado previo al despliegue
 
-No se ha publicado ni verificado una URL de GitHub Pages. La CLI de GitHub necesita reautenticación y el navegador muestra login. El conector disponible lee el perfil, pero no permite crear repositorios. `scripts/publish.ps1` prepara la creación/subida tras reconectar.
+Las pruebas anteriores se realizaron en local antes del despliegue. Posteriormente se verificó la sesión de GitHub CLI con acceso de red: conectada como `jordiprga`. Las comprobaciones sin acceso de red podían indicar un token inválido de forma errónea.
 
-Tampoco se ha acreditado una licencia de redistribución pública para los históricos Yahoo. El workflow de Pages queda condicionado a documentar esa evidencia; CI puede ejecutarse sin datos. Los workflows están implementados, pero aún no han sido ejecutados en GitHub. Las actualizaciones automáticas no están activas en un remoto.
+Tras la instrucción posterior del usuario de subir y generar la página para su prototipo personal, se habilita el workflow de Pages. Esto no se presenta como acreditación de una licencia de redistribución de los datos. Los resultados de ejecución y la URL verificada se añadirán tras finalizar la publicación.

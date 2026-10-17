@@ -19,5 +19,5 @@ if ($LASTEXITCODE -ne 0) { throw 'No se pudo crear/subir el repositorio.' }
 & gh api --method POST "repos/$login/$RepositoryName/pages" -f build_type=workflow
 if ($LASTEXITCODE -ne 0) { Write-Warning 'Configura Settings → Pages → GitHub Actions en el repositorio.' }
 Write-Output "Código publicado: https://github.com/$login/$RepositoryName"
-Write-Output 'El despliegue con datos seguirá deshabilitado hasta documentar los derechos del proveedor.'
+Write-Output 'El workflow prepara los datos y despliega el prototipo personal solicitado.'
 Write-Output 'No se ha verificado una URL pública funcional por ejecutar este script.'

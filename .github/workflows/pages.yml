@@ -13,8 +13,6 @@ concurrency:
   cancel-in-progress: false
 jobs:
   prepare:
-    # Set only after documenting a provider's permission for public display/redistribution.
-    if: vars.PUBLIC_DATA_APPROVED == 'true' && vars.DATA_LICENSE_REFERENCE != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

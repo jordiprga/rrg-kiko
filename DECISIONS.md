@@ -28,14 +28,14 @@ El benchmark completo se muestra en un eje independiente del selector de interva
 
 ## Publicación y límites comprobados
 
-Destino acordado: GitHub Pages, sin contraseña. Noindex no equivale a privacidad. Los documentos personales, cachés e históricos están excluidos de Git. La carpeta pública de datos sí entra en un build local, por lo que no se debe subir ese build sin verificar derechos.
+Destino acordado: GitHub Pages, sin contraseña. Noindex no equivale a privacidad. Los documentos personales, cachés e históricos están excluidos de Git. La carpeta pública de datos entra en el artefacto de despliegue, preparado por Actions.
 
 Fuentes consultadas: [README de yfinance](https://github.com/ranaroussi/yfinance), [condiciones de Yahoo](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html), [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages), [Vite](https://vite.dev/guide/static-deploy.html#github-pages) y [ayuda RRG](https://help.stockcharts.com/charts-and-tools/other-charting-tools/rrg-charts).
 
-No se ha verificado una licencia que autorice la publicación de los históricos Yahoo en esta web. Por ello, Pages se condiciona a `PUBLIC_DATA_APPROVED` y una referencia de licencia documentada. No se sustituye esta comprobación por una advertencia ni por el hecho de que el uso previsto sea personal. El adaptador permite cambiar de fuente manteniendo UI y fórmulas.
+No se ha verificado una licencia que autorice la redistribución pública general de los históricos Yahoo. Después de informar de esta limitación, el usuario ha pedido expresamente subir el proyecto y generar la página para su prototipo personal. Se habilita ese despliegue por su instrucción posterior, sin inventar una referencia de licencia ni afirmar que su autorización concede derechos de terceros. El adaptador permite cambiar de fuente manteniendo UI y fórmulas.
 
-El token local de GitHub es inválido. El conector puede leer el perfil pero no dispone de operación para crear repositorios; el navegador solicita iniciar sesión. No se ha creado un remoto ni verificado una URL pública.
+La sesión de GitHub CLI está conectada como `jordiprga`, verificada con acceso de red. Las comprobaciones sin ese acceso podían indicar erróneamente que el token era inválido. La URL se verificará al finalizar el workflow de despliegue.
 
 ## Fallos y mantenimiento
 
-Dataset escrito atómicamente; ante descarga parcial se conserva el anterior. El estado del intento se publica aparte para avisar en UI. Caché de Actions para fallback, aviso de antigüedad a los cinco días naturales y límite de 14 días antes de desplegar. Las pruebas y el build se ejecutan independientemente de habilitar publicación. La actualización automática sólo se activará al resolver sus dependencias.
+Dataset escrito atómicamente; ante descarga parcial se conserva el anterior. El estado del intento se publica aparte para avisar en UI. Caché de Actions para fallback, aviso de antigüedad a los cinco días naturales y límite de 14 días antes de desplegar. Las pruebas y el build se ejecutan antes de la publicación. El workflow diario se activa con la subida al remoto.

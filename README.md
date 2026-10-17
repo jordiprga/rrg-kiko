@@ -2,7 +2,7 @@
 
 Explorador personal de fuerza relativa para índices y sectores estadounidenses. Diario/semanal, cuatro cuadrantes, colas de 1–30 periodos, flechas, reproducción histórica, zoom, tabla y enlaces compartibles.
 
-**Estado:** aplicación local funcional con históricos reales. No hay una URL pública desplegada. Los datos de Yahoo y las notas personales están excluidos de Git; la publicación de datos está pendiente de verificar las condiciones del proveedor. La sesión local de GitHub también requiere reconexión para crear el remoto y subir el proyecto.
+**Estado:** aplicación funcional con históricos reales. Repositorio de destino: [jordiprga/rrg-kiko](https://github.com/jordiprga/rrg-kiko). La URL verificada de la aplicación se documentará al completar el despliegue. Las notas personales y los históricos descargados están excluidos de Git; Actions prepara los datos al desplegar.
 
 ## Ejecutar
 
@@ -75,14 +75,15 @@ Actions puede retrasarse y GitHub puede desactivar crons de repositorios públic
 
 ## Publicación en GitHub Pages
 
-1. Resolver las condiciones de publicación de los datos y registrar la evidencia en `DECISIONS.md`. Los históricos actuales son para la prueba personal: no se incluyen en el remoto ni en un despliegue mientras no se verifiquen los derechos.
-2. Reconectar GitHub (`gh auth login --hostname github.com`), crear un repositorio público `rrg-kiko` y subir la rama `main`. El encargo y las notas personales permanecen locales.
-3. En Settings → Pages, seleccionar **GitHub Actions**. Una vez documentados los derechos, establecer variables de Actions `PUBLIC_DATA_APPROVED=true` y `DATA_LICENSE_REFERENCE` con la referencia verificable correspondiente. No activar sólo por tratarse de un proyecto gratuito o por tener una advertencia en el pie.
-4. Ejecutar el workflow de Pages y abrir la URL que devuelva el despliegue. Verificar gráfico, fuente/fecha, enlace y recarga directa. No hay una URL publicada que pueda darse por existente de antemano.
+1. Conectar GitHub (`gh auth login --hostname github.com`), crear el repositorio público `rrg-kiko` y subir `main`. El encargo y las notas personales permanecen locales.
+2. En Settings → Pages, seleccionar **GitHub Actions**.
+3. Ejecutar «Refresh market data and deploy Pages» y abrir la URL que devuelva. Verificar gráfico, fuente/fecha, enlace y recarga directa antes de anunciarlo como publicado.
+
+El usuario ha solicitado desplegar este prototipo de uso personal. La autorización para realizar el despliegue no constituye una licencia de Yahoo ni se presenta como tal; se mantienen la atribución, las limitaciones y el adaptador intercambiable. Revisar las condiciones del proveedor antes de ampliar el uso o redistribuir el servicio.
 
 Vite utiliza base relativa `./`; activos y dataset funcionan bajo `/rrg-kiko/` sin rutas de servidor. La aplicación no tiene login. El `noindex` solicita no indexarla y **no restringe el acceso**. El build contiene los datos presentes en `public/data/`, aunque no estén versionados: revisar antes de subirlo a cualquier alojamiento.
 
-Tras reconectar GitHub, `./scripts/publish.ps1` automatiza el paso 2 y configura Pages desde Actions. Publica sólo los archivos ya versionados; se detiene si el nombre está ocupado o ya hay remoto. No activa el despliegue de datos ni sustituye la verificación del paso 1.
+`./scripts/publish.ps1` automatiza la creación/subida y configura Pages desde Actions. Publica sólo los archivos ya versionados; se detiene si el nombre está ocupado o ya hay remoto. El workflow prepara los datos para el despliegue del prototipo personal.
 
 ## Condiciones y límites
 
