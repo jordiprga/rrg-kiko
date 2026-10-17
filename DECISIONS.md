@@ -34,7 +34,7 @@ Fuentes consultadas: [README de yfinance](https://github.com/ranaroussi/yfinance
 
 No se ha verificado una licencia que autorice la redistribución pública general de los históricos Yahoo. Después de informar de esta limitación, el usuario ha pedido expresamente subir el proyecto y generar la página para su prototipo personal. Se habilita ese despliegue por su instrucción posterior, sin inventar una referencia de licencia ni afirmar que su autorización concede derechos de terceros. El adaptador permite cambiar de fuente manteniendo UI y fórmulas.
 
-La sesión de GitHub CLI está conectada como `jordiprga`, verificada con acceso de red. Las comprobaciones sin ese acceso podían indicar erróneamente que el token era inválido. La URL se verificará al finalizar el workflow de despliegue.
+La sesión de GitHub CLI está conectada como `jordiprga`, verificada con acceso de red. Las comprobaciones sin ese acceso podían indicar erróneamente que el token era inválido. Repositorio creado: https://github.com/jordiprga/rrg-kiko. Despliegue y URL verificados: https://jordiprga.github.io/rrg-kiko/.
 
 ## Fallos y mantenimiento
 

@@ -31,3 +31,13 @@
 Las pruebas anteriores se realizaron en local antes del despliegue. Posteriormente se verificó la sesión de GitHub CLI con acceso de red: conectada como `jordiprga`. Las comprobaciones sin acceso de red podían indicar un token inválido de forma errónea.
 
 Tras la instrucción posterior del usuario de subir y generar la página para su prototipo personal, se habilita el workflow de Pages. Esto no se presenta como acreditación de una licencia de redistribución de los datos. Los resultados de ejecución y la URL verificada se añadirán tras finalizar la publicación.
+
+## Despliegue público verificado · 17/10/2026
+
+- Repositorio: https://github.com/jordiprga/rrg-kiko.
+- Página: https://jordiprga.github.io/rrg-kiko/.
+- [Pruebas y build en GitHub](https://github.com/jordiprga/rrg-kiko/actions/runs/39063278413): completado correctamente.
+- [Refresco y despliegue](https://github.com/jordiprga/rrg-kiko/actions/runs/39063278280): completado correctamente; descarga desde el runner, validación, caché y Pages operativos.
+- HTTP 200, HTTPS activo y dataset público de 18 instrumentos, generado el 17/10/2026 a las 21:38 de Madrid; última sesión 16/10/2026.
+- Navegador público: cuatro índices en semanal al abrir; cambio a sectores/diario, seis activos y cola 30, copia de enlace confirmada. Dos gráficos cargados, consola sin errores ni advertencias.
+- Programación activa del workflow: lunes a viernes a las 23:35 UTC, además de ejecución manual y despliegues por push a main.

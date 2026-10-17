@@ -2,7 +2,7 @@
 
 Explorador personal de fuerza relativa para índices y sectores estadounidenses. Diario/semanal, cuatro cuadrantes, colas de 1–30 periodos, flechas, reproducción histórica, zoom, tabla y enlaces compartibles.
 
-**Estado:** aplicación funcional con históricos reales. Repositorio de destino: [jordiprga/rrg-kiko](https://github.com/jordiprga/rrg-kiko). La URL verificada de la aplicación se documentará al completar el despliegue. Las notas personales y los históricos descargados están excluidos de Git; Actions prepara los datos al desplegar.
+**Web publicada y verificada:** [Abrir Órbita](https://jordiprga.github.io/rrg-kiko/). Código: [jordiprga/rrg-kiko](https://github.com/jordiprga/rrg-kiko). Las notas personales y los históricos descargados están excluidos de Git; Actions prepara los datos al desplegar.
 
 ## Ejecutar
 
