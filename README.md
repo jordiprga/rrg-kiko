@@ -1,8 +1,8 @@
 # Órbita · rotación relativa
 
-Explorador personal de fuerza relativa para índices y sectores estadounidenses. Diario/semanal, cuatro cuadrantes, colas de 1–30 periodos, flechas, reproducción histórica, zoom, tabla y enlaces compartibles.
+Explorador de fuerza relativa para índices y sectores estadounidenses. Diario/semanal, cuatro cuadrantes, colas de 1–30 periodos, reproducción histórica, zoom, tabla y enlaces compartibles.
 
-**Web publicada y verificada:** [Abrir Órbita](https://jordiprga.github.io/rrg-kiko/). Código: [jordiprga/rrg-kiko](https://github.com/jordiprga/rrg-kiko). Las notas personales y los históricos descargados están excluidos de Git; Actions prepara los datos al desplegar.
+**[Abrir Órbita](https://jordiprga.github.io/rrg-kiko/)**
 
 ## Ejecutar
 
@@ -18,8 +18,6 @@ pnpm dev
 ```
 
 Abrir la dirección local que imprime Vite. Si falta `pnpm`, instalarlo desde su distribución oficial. Los datos sólo se descargan con el comando de ingesta, nunca desde el navegador.
-
-En el equipo de desarrollo también puede abrirse con `./scripts/dev.ps1`, que localiza el pnpm incluido en el entorno si no está en PATH.
 
 ```powershell
 python -m pytest tests -q
@@ -38,12 +36,12 @@ pnpm preview
 - «Ajustar» encuadra las colas actuales; «Histórico» encuadra todo el histórico de los activos visibles; «Centrar» sitúa (100,100) en el centro. «Fijar ajuste» recalcula el modo elegido con cada cambio; desmarcarlo conserva la escala. Ratón/pellizco para zoom; arrastrar para desplazar.
 - Marcar/desmarcar en el panel añade o quita instrumentos. Las casillas de la tabla sólo controlan visibilidad. Pulsar el nombre de una fila resalta su trayectoria; repetir quita el resaltado.
 - «Copiar enlace» guarda universo, referencia, activos, periodicidad, cola, flechas y activos ocultos en la URL. Incluye alternativa manual si el navegador deniega el portapapeles. No depende de almacenamiento local.
-- El enlace siempre carga el último periodo disponible del dataset, no la fecha histórica explorada. Una URL de localhost sólo funciona en ese equipo; compartir con otra persona requiere desplegar la web.
+- El enlace siempre carga el último periodo disponible del dataset, no la fecha histórica explorada.
 - La cola mide intervalos: 17 periodos necesitan hasta 18 observaciones. En el inicio del histórico se dibujan sólo las observaciones disponibles.
 
 ## Catálogo y precios
 
-Validado inicialmente con cinco años y 1.255 sesiones por instrumento, última sesión 16/10/2026:
+Histórico de cinco años, con todos los instrumentos en USD:
 
 - Índices de precio: `^GSPC`, `^IXIC`, `^NDX`, `^DJI`, `^RUT`. Referencias S&P 500 o Nasdaq 100.
 - Sectores: `XLK`, `XLF`, `XLE`, `XLI`, `XLV`, `XLY`, `XLP`, `XLU`, `XLB`, `XLRE`, `XLC`. Referencias `SPY` o `QQQ`.
@@ -73,28 +71,8 @@ El workflow `Refresh market data and deploy Pages` está preparado para lunes–
 
 Actions puede retrasarse y GitHub puede desactivar crons de repositorios públicos tras 60 días sin actividad. Para forzar una ejecución: Actions → «Refresh market data and deploy Pages» → «Run workflow». No es tiempo real ni tiene garantía de horario.
 
-## Publicación en GitHub Pages
+## Fuente y alcance
 
-1. Conectar GitHub (`gh auth login --hostname github.com`), crear el repositorio público `rrg-kiko` y subir `main`. El encargo y las notas personales permanecen locales.
-2. En Settings → Pages, seleccionar **GitHub Actions**.
-3. Ejecutar «Refresh market data and deploy Pages» y abrir la URL que devuelva. Verificar gráfico, fuente/fecha, enlace y recarga directa antes de anunciarlo como publicado.
+Datos de [Yahoo Finance](https://finance.yahoo.com/) mediante [yfinance](https://github.com/ranaroussi/yfinance), sujetos a las condiciones del proveedor. Indicadores independientes; no constituye recomendación de inversión.
 
-El usuario ha solicitado desplegar este prototipo de uso personal. La autorización para realizar el despliegue no constituye una licencia de Yahoo ni se presenta como tal; se mantienen la atribución, las limitaciones y el adaptador intercambiable. Revisar las condiciones del proveedor antes de ampliar el uso o redistribuir el servicio.
-
-Vite utiliza base relativa `./`; activos y dataset funcionan bajo `/rrg-kiko/` sin rutas de servidor. La aplicación no tiene login. El `noindex` solicita no indexarla y **no restringe el acceso**. El build contiene los datos presentes en `public/data/`, aunque no estén versionados: revisar antes de subirlo a cualquier alojamiento.
-
-`./scripts/publish.ps1` automatiza la creación/subida y configura Pages desde Actions. Publica sólo los archivos ya versionados; se detiene si el nombre está ocupado o ya hay remoto. El workflow prepara los datos para el despliegue del prototipo personal.
-
-## Condiciones y límites
-
-- Fuente: [Yahoo Finance](https://finance.yahoo.com/) vía [yfinance](https://github.com/ranaroussi/yfinance). La licencia del software no concede derechos sobre los datos. yfinance remite a las condiciones de Yahoo y advierte del uso personal. No se ha acreditado autorización para redistribuir estas series públicamente.
-- No hay órdenes, recomendaciones automáticas, cartera, cuentas ni intradía.
-- No se usan servicios de pago ni claves incrustadas en el cliente.
-- Navegación inspirada en la [herramienta RRG y su ayuda](https://help.stockcharts.com/charts-and-tools/other-charting-tools/rrg-charts), con diseño independiente.
-
-## Mejoras siguientes
-
-1. Listas personales guardadas.
-2. Comparación simultánea diario/semanal.
-3. Exportación de imagen con fecha y metodología.
-4. Más instrumentos y fuentes con condiciones apropiadas.
+La aplicación utiliza TypeScript, Vite y ECharts; Python prepara los históricos. Se aloja en GitHub Pages y se actualiza mediante GitHub Actions.

@@ -12,6 +12,10 @@ __pycache__/
 AGENTS.md
 ENCARGO_CODEX_RRG_KIKO.md
 NAVEGABILIDAD_RRG.md
+DECISIONS.md
+VERIFICATION.md
+scripts/dev.ps1
+scripts/publish.ps1
 public/data/market.json
 public/data/refresh-status.json
 artifacts/

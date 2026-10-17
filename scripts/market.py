@@ -166,7 +166,7 @@ def refresh(provider: DataProvider, output: Path, now: pd.Timestamp, offline: bo
         "sourceUrl": "https://finance.yahoo.com/", "latestSession": expected,
         "expectedWeeklySession": completed_week_ends(schedule, now)[-1].date().isoformat(),
         "priceConvention": "Índices: cierre de precio. ETFs: cierre ajustado por dividendos y splits. No mezclar familias.",
-        "method": "relative-ema-v1", "usage": "Prototipo personal. Redistribución pública no verificada.",
+        "method": "relative-ema-v1", "usage": "personal-research",
         "catalog": [i for i in config["instruments"] if i["id"] in prices and i["group"] in groups],
         "groups": groups, "views": views, "errors": errors,
     }
