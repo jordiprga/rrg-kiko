@@ -1,0 +1,4 @@
+yfinance==0.2.66
+pandas==2.3.3
+exchange-calendars==4.11.2
+pytest==8.4.2

@@ -1,0 +1,26 @@
+{
+  "instruments": [
+    {"id":"GSPC","ticker":"^GSPC","name":"S&P 500","type":"index","group":"indices","market":"US","currency":"USD"},
+    {"id":"IXIC","ticker":"^IXIC","name":"Nasdaq Composite","type":"index","group":"indices","market":"US","currency":"USD"},
+    {"id":"NDX","ticker":"^NDX","name":"Nasdaq 100","type":"index","group":"indices","market":"US","currency":"USD"},
+    {"id":"DJI","ticker":"^DJI","name":"Dow Jones","type":"index","group":"indices","market":"US","currency":"USD"},
+    {"id":"RUT","ticker":"^RUT","name":"Russell 2000","type":"index","group":"indices","market":"US","currency":"USD"},
+    {"id":"SPY","ticker":"SPY","name":"SPDR S&P 500 ETF","type":"etf","group":"sectors","market":"US","currency":"USD","proxyOf":"S&P 500"},
+    {"id":"QQQ","ticker":"QQQ","name":"Invesco QQQ","type":"etf","group":"sectors","market":"US","currency":"USD","proxyOf":"Nasdaq 100"},
+    {"id":"XLK","ticker":"XLK","name":"Tecnología","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLF","ticker":"XLF","name":"Finanzas","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLE","ticker":"XLE","name":"Energía","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLI","ticker":"XLI","name":"Industria","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLV","ticker":"XLV","name":"Salud","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLY","ticker":"XLY","name":"Consumo discrecional","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLP","ticker":"XLP","name":"Consumo básico","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLU","ticker":"XLU","name":"Servicios públicos","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLB","ticker":"XLB","name":"Materiales","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLRE","ticker":"XLRE","name":"Inmobiliario","type":"etf","group":"sectors","market":"US","currency":"USD"},
+    {"id":"XLC","ticker":"XLC","name":"Comunicación","type":"etf","group":"sectors","market":"US","currency":"USD"}
+  ],
+  "groups": {
+    "indices": {"name":"Índices","benchmarks":["GSPC","NDX"],"defaultBenchmark":"GSPC","defaults":["IXIC","NDX","DJI","RUT"]},
+    "sectors": {"name":"Sectores","benchmarks":["SPY","QQQ"],"defaultBenchmark":"SPY","defaults":["XLK","XLF","XLE","XLI","XLV","XLY"]}
+  }
+}

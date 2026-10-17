@@ -1,0 +1,71 @@
+name: Refresh market data and deploy Pages
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 23:35 UTC is 18:35 EST / 19:35 EDT, after EOD publication.
+    - cron: '35 23 * * 1-5'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+jobs:
+  prepare:
+    # Set only after documenting a provider's permission for public display/redistribution.
+    if: vars.PUBLIC_DATA_APPROVED == 'true' && vars.DATA_LICENSE_REFERENCE != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pnpm install --frozen-lockfile
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pytest tests -q
+      - run: pnpm test
+      - uses: actions/cache/restore@v4
+        with:
+          path: public/data
+          key: market-data-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: market-data-
+      - name: Refresh (preserve previous snapshot on failure)
+        id: refresh
+        continue-on-error: true
+        run: python -m scripts.market
+      - name: Validate snapshot before publication
+        run: python -m scripts.validate_data --max-age-days 14
+      - uses: actions/cache/save@v4
+        with:
+          path: public/data
+          key: market-data-${{ github.run_id }}-${{ github.run_attempt }}
+      - run: pnpm build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Explain refresh fallback
+        if: steps.refresh.outcome == 'failure'
+        run: echo "Se publica la última copia válida, con aviso de fallo y antigüedad." >> "$GITHUB_STEP_SUMMARY"
+  deploy:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
