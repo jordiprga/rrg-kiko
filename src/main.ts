@@ -82,7 +82,40 @@ async function boot() {
           <th scope="col"><span class="sr-only">Visible</span></th><th scope="col"><button data-sort="name">Activo ↕</button></th><th scope="col"><button data-sort="quadrant">Cuadrante ↕</button></th><th scope="col"><button data-sort="x">Fuerza ↕</button></th><th scope="col"><button data-sort="y">Momentum ↕</button></th><th scope="col">Δ fuerza / momentum¹</th><th scope="col">Cambio de cuadrante¹</th><th scope="col">Cierre comparable</th><th scope="col">Fecha</th>
         </tr></thead><tbody id="table-body"></tbody></table></div><p class="table-note">¹ Frente al periodo anterior. El cierre de un ETF está ajustado por dividendos y splits.</p></section>
         <section class="quadrant-guide" aria-label="Interpretación de cuadrantes">${(['improving', 'leading', 'lagging', 'weakening'] as const).map(q => `<div><span class="quadrant-dot" style="background:${quadrants[q].color}"></span><strong>${quadrants[q].name}</strong><p>${quadrants[q].hint}</p></div>`).join('')}</section>
-        <details class="method-card"><summary>Qué estás viendo · datos y metodología <span>＋</span></summary><div class="method-content"><p>Esta es una implementación independiente de rotación relativa. Sus valores <strong>no son los indicadores JdK originales de StockCharts</strong> y las posiciones pueden diferir.</p><p><code>RS = precio activo / precio referencia</code><br><code>X = 100 × RS / EMA(RS, N)</code><br><code>Y = 100 × X / EMA(X, M)</code></p><p>Diario: N=50, M=20. Semanal: N=10, M=4. EMA causal, con cinco ventanas de calentamiento. Cada cola cubre el número elegido de intervalos y puede contener un punto inicial adicional.</p><p>${esc(data.priceConvention)} El conjunto semanal sólo incluye la última sesión de cada semana completada según el calendario bursátil estadounidense. Un cruce por 100 no constituye una señal de compra o venta.</p><p>Los enlaces conservan la configuración y abren los datos más recientes; la fecha explorada no se guarda. Los índices son series de precio; los ETFs ajustados incluyen el efecto de distribuciones y no son equivalentes a los índices de precio.</p><p>Fuente: <a href="${esc(data.sourceUrl)}" target="_blank" rel="noopener noreferrer">Yahoo Finance</a> mediante yfinance. Información de la fuente en <a href="https://github.com/ranaroussi/yfinance" target="_blank" rel="noopener noreferrer">yfinance</a>. No constituye recomendación de inversión.</p></div></details>
+        <details class="method-card" id="methodology">
+          <summary>Qué estás viendo · datos y metodología <span class="kiko-badge">Kiko, mira aquí 👀</span><span aria-hidden="true">＋</span></summary>
+          <div class="method-content">
+            <section class="kiko-explainer" id="para-kiko" aria-labelledby="kiko-heading">
+              <h3 id="kiko-heading">Kiko, aquí te explico lo que quieres entender jeje</h3>
+              <a class="kiko-video" href="https://www.youtube.com/watch?v=DLzxrzFCyOs" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">▶</span><span>Primero, abre este vídeo<strong>Una introducción imprescindible 😉</strong></span><span aria-hidden="true">↗</span></a>
+              <p class="kiko-intro">Ahora sí: ¿qué cálculo convierte dos cotizaciones en un punto del gráfico?</p>
+              <h4>1. Comparamos el activo con la referencia</h4>
+              <p>En cada fecha dividimos el cierre del activo por el cierre del benchmark. Ese cociente se llama fuerza relativa, o RS.</p>
+              <p><code>RS = precio del activo / precio del benchmark</code></p>
+              <p>Si el activo lo hace mejor que la referencia, RS sube; si lo hace peor, baja. Puede mejorar aunque ambos caigan, si el activo cae menos.</p>
+              <h4>2. Calculamos la posición horizontal: X</h4>
+              <p>Comparamos RS con su media móvil exponencial (EMA). Esta media da más peso a las observaciones recientes. Multiplicamos por 100 para situar la referencia en 100.</p>
+              <p><code>X = 100 × RS / EMA(RS, N)</code></p>
+              <p><strong>X &gt; 100:</strong> el cociente activo/benchmark está por encima de su media reciente. <strong>X &lt; 100:</strong> está por debajo. X=102 significa un 2 % sobre esa media; no significa que el activo haya superado al índice en un 2 % durante un plazo concreto.</p>
+              <h4>3. Calculamos la posición vertical: Y</h4>
+              <p>Comparamos X con su propia media exponencial para representar su momentum relativo.</p>
+              <p><code>Y = 100 × X / EMA(X, M)</code></p>
+              <p><strong>Y &gt; 100:</strong> X está por encima de su media reciente. <strong>Y &lt; 100:</strong> está por debajo. No es la rentabilidad del activo ni una derivada instantánea.</p>
+              <div class="kiko-example"><strong>Un ejemplo con números inventados, sólo para entenderlo</strong><p>Activo: 102 · benchmark: 5.000 → RS=0,0204.<br>Si EMA(RS)=0,0200 → X=102.<br>Si EMA(X)=101 → Y≈100,99.<br>El punto (102; 100,99) cae en <strong>Líder</strong>: ambos indicadores superan 100.</p></div>
+              <h4>4. Unimos los puntos para dibujar la cola</h4>
+              <p>Cada sesión o semana produce un punto (X,Y). La cola conecta esos puntos en orden temporal y termina en la fecha explorada. Una cola de 17 periodos utiliza hasta 18 observaciones. Cambiar su longitud modifica el recorrido visible, no la fórmula ni el punto final.</p>
+              <h4>¿Qué parámetros usamos?</h4>
+              <p><strong>Diario:</strong> N=50 sesiones y M=20 sesiones. <strong>Semanal:</strong> N=10 semanas y M=4 semanas. Son parámetros elegidos para esta implementación, no los oficiales de StockCharts. El semanal se calcula con su propia serie de cierres semanales; no es una muestra del indicador diario.</p>
+              <h4>¿Es exactamente el RRG de StockCharts?</h4>
+              <p><strong>No: reproducimos la experiencia de navegación con indicadores propios.</strong> StockCharts usa JdK RS-Ratio y JdK RS-Momentum. Nuestros valores no son esos indicadores y sus puntos y trayectorias pueden diferir. La fórmula que ves aquí es exactamente la implementada en esta web.</p>
+              <h4>¿De dónde salen los datos?</h4>
+              <p>Yahoo Finance, con cinco años de históricos. ${esc(data.priceConvention)} Se cruzan sólo las fechas con datos en ambas series, sin inventar cierres. En semanal se usa la última sesión real de una semana completada, incluidos los festivos.</p>
+              <p>Las EMA sólo usan la fecha calculada y las anteriores. Se descartan cinco ventanas N de calentamiento. Las pruebas comprueban, entre otras cosas, que comparar un activo consigo mismo da (100,100), que cambiar la escala del precio no altera el resultado y que añadir datos futuros no modifica los valores anteriores sobre una misma serie de precios.</p>
+            </section>
+            <p>Los enlaces conservan la configuración y abren los datos más recientes; la fecha explorada no se guarda. Un cruce por 100 no constituye una señal de compra o venta.</p>
+            <p>Fuente: <a href="${esc(data.sourceUrl)}" target="_blank" rel="noopener noreferrer">Yahoo Finance</a> mediante <a href="https://github.com/ranaroussi/yfinance" target="_blank" rel="noopener noreferrer">yfinance</a>. No constituye recomendación de inversión.</p>
+          </div>
+        </details>
       </section>
     </main>
     <footer class="page-footer"><span>${icon('orbit')} Órbita <span class="muted">· una vista relativa</span></span><div><span>Última sesión de mercado: <b>${formatDate(data.latestSession)}</b></span><span>Actualización: <b>${new Date(data.generatedAt).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'short', timeStyle: 'short' })} · Madrid</b></span><span>Yahoo Finance · USD</span></div></footer>
@@ -279,6 +312,10 @@ async function boot() {
   if (matchMedia('(max-width: 760px)').matches) el<HTMLDetailsElement>('settings').open = false;
   if (Object.keys(data.errors).length) { el('notice').textContent = `Instrumentos no disponibles: ${Object.keys(data.errors).join(', ')}. El resto del catálogo funciona.`; el('notice').hidden = false; }
   configurationChanged();
+  if (location.hash === '#para-kiko') {
+    el<HTMLDetailsElement>('methodology').open = true;
+    requestAnimationFrame(() => el('para-kiko').scrollIntoView({ block: 'start' }));
+  }
 }
 
 boot().catch(error => {
