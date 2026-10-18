@@ -39,6 +39,9 @@ export async function mountStrategies(container: HTMLElement) {
     try {
       manifest = validateManifest(await fetchJson('manifest.json'));
       if (manifest.currentStudyUrl && !new URLSearchParams(location.search).has('sv')) state = {...state, universe:'stocks',page:'results',tf:'weekly'};
+      if(manifest.currentStudyUrl && manifest.currentRefreshStatusUrl) try {
+        const refresh=await fetchJson(manifest.currentRefreshStatusUrl);manifest.currentRefreshFailed=refresh.ok===false;
+      } catch { /* Older valid reports predate the separate refresh status. */ }
       try {
         const status = await fetchJson('refresh-status.json');
         if (status.ok === false) manifest = { ...manifest, researchRefreshFailed: true } as StrategyManifest;
@@ -155,7 +158,7 @@ export async function mountStrategies(container: HTMLElement) {
     dispose();
     executionDetails = undefined;
     container.innerHTML = `<div class="strategy-intro"><p class="strategy-eyebrow">LABORATORIO DE ÓRBITA</p><h2>¿Qué aportan estos giros?</h2><p>Encuentra la entrada, recorre lo que ocurrió después y comprueba la evidencia.</p></div>
-      <div class="strategy-warning" role="status"><strong>${esc(status())}</strong><p>${manifest.currentCoverage ? `Resultados sobre los componentes actuales, con sesgo de supervivencia declarado. Acciones hasta ${esc(manifest.currentCoverage.latestSession)}. Compara entrenamiento, validación y prueba posterior.` : (manifest as any).researchRefreshFailed ? 'La actualización de investigación no superó la auditoría. Se conserva el último estudio válido con sus fechas originales.' : manifest.audit.status === 'eligible' ? 'El universo importado supera la auditoría. Consulta los resultados y su incertidumbre.' : 'El estudio de acciones espera un histórico completo. Puedes explorar ya los giros reales de los índices.'}</p></div>
+      <div class="strategy-warning" role="status"><strong>${esc(status())}</strong><p>${manifest.currentCoverage ? `${manifest.currentRefreshFailed?"La actualización falló; se conserva el último estudio válido con sus fechas originales. ":""}Resultados sobre los componentes actuales, con sesgo de supervivencia declarado. Acciones hasta ${esc(manifest.currentCoverage.latestSession)}. Compara entrenamiento, validación y prueba posterior.` : (manifest as any).researchRefreshFailed ? 'La actualización de investigación no superó la auditoría. Se conserva el último estudio válido con sus fechas originales.' : manifest.audit.status === 'eligible' ? 'El universo importado supera la auditoría. Consulta los resultados y su incertidumbre.' : 'El estudio de acciones espera un histórico completo. Puedes explorar ya los giros reales de los índices.'}</p></div>
       ${toolbar()}<nav class="strategy-tabs" aria-label="Vistas de estrategias">${[['signals', 'Señales'], ['case', 'Caso individual'], ['results', 'Resultados']].map(([id, name]) => `<button data-study-page="${id}" aria-pressed="${state.page === id}">${name}</button>`).join('')}<button id="study-share" class="push-right">Copiar este estudio ↗</button></nav>
       <div id="study-share-status" role="status"></div>${!detail && state.page !== 'results' ? '<section class="strategy-card"><h3>Universo todavía no evaluable</h3><p>Consulta «Cobertura y fuentes» para ver los datos pendientes. Los casos de índices están disponibles en el selector de universo.</p></section>' : content}
       ${coverageMarkup()}${protocolMarkup()}<p class="strategy-note">Última sesión: ${esc(manifest.latestSession)} · Informe: ${esc(manifest.generatedAt.slice(0, 10))}</p>`;

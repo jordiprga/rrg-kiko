@@ -49,16 +49,38 @@ jobs:
           restore-keys: strategy-registry-
       - name: Build strategy coverage and real historical cases
         run: python -m scripts.strategies
+      - name: Check calculation, universe and last closed session
+        id: current-freshness
+        run: python -m scripts.current_freshness
       - name: Download all current S&P 500 constituents and index ETF proxies
+        if: steps.current-freshness.outputs.needed == 'true'
         id: current-data
         continue-on-error: true
         run: python -u -m scripts.current_universe
       - name: Calculate current-universe strategies and capital allocation
+        if: steps.current-freshness.outputs.needed == 'true' && steps.current-data.outcome == 'success'
         id: current-study
         continue-on-error: true
         run: python -u -m scripts.current_study
       - name: Require a valid current-universe report
         run: python -c "import json,pathlib; p=pathlib.Path('public/data/strategies'); m=json.loads((p/'manifest.json').read_text()); r=json.loads((p/m['currentStudyUrl']).read_text()); assert r['universeCount']>=490 and len(r['allocations']['candidates'])==144"
+      - name: Record refresh status separately from last valid results
+        env:
+          DATA_OUTCOME: ${{ steps.current-data.outcome }}
+          STUDY_OUTCOME: ${{ steps.current-study.outcome }}
+        run: |
+          python - <<'PY'
+          import os
+          import json
+          from datetime import datetime, timezone
+          from scripts.market import ROOT, atomic_json
+          ok = all(os.environ[k] != 'failure' for k in ['DATA_OUTCOME', 'STUDY_OUTCOME'])
+          atomic_json(ROOT / 'public/data/strategies/current-refresh-status.json', dict(version=1, ok=ok, attemptedAt=datetime.now(timezone.utc).isoformat()))
+          path = ROOT / 'public/data/strategies/manifest.json'
+          manifest = json.loads(path.read_text())
+          manifest['currentRefreshStatusUrl'] = 'current-refresh-status.json'
+          atomic_json(path, manifest)
+          PY
       - uses: actions/cache/save@v4
         with:
           path: .cache/strategies/prospective.jsonl

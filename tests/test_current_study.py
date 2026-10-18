@@ -11,7 +11,7 @@ from scripts.strategy_allocation import Allocator, capped_weights, policies, sel
 from scripts.strategy_data import Bar
 from scripts.strategy_engine import Signal, simulate
 from scripts.strategy_stats import portfolio
-from scripts.current_universe import supplement_fiserv
+from scripts.current_universe import supplement_fiserv,missing_sessions
 
 
 def market_fixture():
@@ -135,3 +135,12 @@ def test_allocator_starts_cash_obeys_caps_and_records_the_period_end():
     assert result['lastHoldings']['date']==dates[300]
     assert sum(p['weight'] for p in result['lastHoldings']['positions'])+result['lastHoldings']['cash']==pytest.approx(1)
     assert result['metrics']['equity'][-1][1]==pytest.approx(np.prod([1+r for _,r in result['returns']]))
+
+
+def test_download_gate_preserves_ipos_but_rejects_internal_missing_sessions():
+    calendar=['2025-11-10','2025-11-11','2025-11-12','2025-11-13','2025-11-14']
+    rows=[['2025-11-12'],['2025-11-13'],['2025-11-14']]
+    assert missing_sessions(rows,calendar,'IPO')==[]
+    assert missing_sessions([rows[0],rows[2]],calendar,'A')==['2025-11-13']
+    assert missing_sessions([['2025-11-11'],['2025-11-13']],calendar,'FISV')==[]
+    assert missing_sessions([['2025-11-11'],['2025-11-13']],calendar,'OTHER')==['2025-11-12']

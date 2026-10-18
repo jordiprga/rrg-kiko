@@ -29,6 +29,13 @@ SECTOR_ETFS = {'Communication Services':'XLC', 'Consumer Discretionary':'XLY', '
 CACHE = ROOT / '.cache/strategies/current'
 
 
+def missing_sessions(rows: list[list], calendar: list[str], ticker: str) -> list[str]:
+    if not rows: return []
+    present={r[0] for r in rows}
+    return [d for d in calendar if rows[0][0]<=d<=rows[-1][0] and d not in present
+            and not (ticker=='FISV' and d=='2025-11-12')]
+
+
 def supplement_fiserv(folder: Path) -> None:
     """Resolve one confirmed vendor gap with a sourced daily bar, not a fill.
 
@@ -93,6 +100,7 @@ def acquire(folder: Path = CACHE, refresh: bool = False) -> dict:
     import exchange_calendars as xcals
     schedule = closed_schedule(xcals.get_calendar('XNYS', start='2008-01-01', end=now.date().isoformat()).schedule, now)
     end = schedule.index[-1].date().isoformat()
+    calendar=[d.date().isoformat() for d in schedule.index]
     folder.mkdir(parents=True, exist_ok=True)
     req = urllib.request.Request(CATALOG_URL, headers={'User-Agent':'Orbita/1.0'})
     content = urllib.request.urlopen(req, timeout=45).read(2_000_000)
@@ -106,7 +114,7 @@ def acquire(folder: Path = CACHE, refresh: bool = False) -> dict:
     for ticker in tickers:
         path = folder/'prices'/(ticker+'.json')
         previous = json.loads(path.read_text()) if path.exists() else None
-        if refresh or not previous or previous.get('last') != end:
+        if refresh or not previous or previous.get('last') != end or missing_sessions(previous['bars'],calendar,ticker):
             needed.append(ticker)
     failures = []
     for offset in range(0, len(needed), 16):
@@ -133,6 +141,8 @@ def acquire(folder: Path = CACHE, refresh: bool = False) -> dict:
                         float(r.get('Dividends',0) or 0), float(r.get('Stock Splits',0) or 1)])
                 if not rows or rows[-1][0] != end:
                     raise ValueError('Sin último cierre válido')
+                gaps=missing_sessions(rows,calendar,ticker)
+                if gaps: raise ValueError('Sesiones ausentes sin resolver: '+','.join(gaps[:5]))
                 atomic_json(folder/'prices'/(ticker+'.json'), dict(version=1,ticker=ticker,first=rows[0][0],last=rows[-1][0],
                     retrievedAt=now.isoformat(), corrections=corrections, columns=['date','open','high','low','close','adjustedClose','volume','dividend','split'], bars=rows))
             except (KeyError,ValueError) as error:

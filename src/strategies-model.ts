@@ -34,6 +34,8 @@ export interface StrategyManifest {
   cases: { id: string; securityId: string; name: string; timeframe: Timeframe; url: string; count: number; scope: string; referenceType?: string }[];
   stockStudyUrl: string | null; studyState: string; prospective: { count: number; added: number; frozenOn: string; lastHash: string };
   currentStudyUrl?: string;
+  currentRefreshFailed?: boolean;
+  currentRefreshStatusUrl?: string;
   currentCoverage?: {asOf: string; count: number; latestSession: string; start: string};
   candidateCoverage?: { intervalRows: number; tickersSince2010: number; closedIntervalsSince2010: number; latestChange: string; contentHash: string };
   priceProbes?: {ticker: string; status: string; sessions?: number; first?: string; last?: string}[];
@@ -85,6 +87,7 @@ export function validateManifest(value: unknown): StrategyManifest {
     if (d.audit.status !== 'eligible' || !d.audit.publicationAllowed) throw new Error('Estudio sin auditoría o permiso de publicación');
   }
   if (d.currentStudyUrl) safeArtifact(d.currentStudyUrl);
+  if (d.currentRefreshStatusUrl) safeArtifact(d.currentRefreshStatusUrl);
   return d;
 }
 export function validateCase(value: unknown): CaseData {
