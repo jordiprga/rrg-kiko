@@ -1,0 +1,284 @@
+{
+  "recordedOn": "2026-10-18",
+  "origin": "Archived local results-v2/result.json; documentation export, no new experiment",
+  "selection": {
+    "xTested": 10476,
+    "yTested": 1144,
+    "xTop": [
+      {
+        "mse": 8.523465534463036e-06,
+        "kind": "sma",
+        "short": 10,
+        "long": 30,
+        "nested": false,
+        "scale": 1.0006163123316318
+      },
+      {
+        "mse": 0.005393897850891151,
+        "kind": "sma",
+        "short": 11,
+        "long": 24,
+        "nested": true,
+        "scale": 0.8816849404967891
+      },
+      {
+        "mse": 0.0054730042412882846,
+        "kind": "sma",
+        "short": 10,
+        "long": 31,
+        "nested": false,
+        "scale": 0.9596216782230996
+      },
+      {
+        "mse": 0.006037523078029405,
+        "kind": "sma",
+        "short": 10,
+        "long": 29,
+        "nested": false,
+        "scale": 1.040535720865071
+      },
+      {
+        "mse": 0.009021386325806423,
+        "kind": "sma",
+        "short": 11,
+        "long": 23,
+        "nested": true,
+        "scale": 0.9093578931082272
+      },
+      {
+        "mse": 0.009613140483978991,
+        "kind": "sma",
+        "short": 12,
+        "long": 22,
+        "nested": true,
+        "scale": 0.9704693203663349
+      },
+      {
+        "mse": 0.010619064264575024,
+        "kind": "sma",
+        "short": 10,
+        "long": 26,
+        "nested": true,
+        "scale": 0.8058168604993295
+      },
+      {
+        "mse": 0.012245994074853023,
+        "kind": "sma",
+        "short": 11,
+        "long": 25,
+        "nested": true,
+        "scale": 0.852817996483742
+      },
+      {
+        "mse": 0.012594933816754035,
+        "kind": "sma",
+        "short": 10,
+        "long": 25,
+        "nested": true,
+        "scale": 0.8294772196287664
+      },
+      {
+        "mse": 0.014538236841358472,
+        "kind": "sma",
+        "short": 12,
+        "long": 21,
+        "nested": true,
+        "scale": 1.0034268756557836
+      }
+    ],
+    "yTop": [
+      {
+        "mse": 5.862935987475114e-06,
+        "kind": "sma",
+        "period": 9,
+        "smoothing": 1,
+        "scale": 1.0005627299130253
+      },
+      {
+        "mse": 0.0027011694008331607,
+        "kind": "ema_roc",
+        "period": 2,
+        "smoothing": 5,
+        "scale": 2.039461337584771
+      },
+      {
+        "mse": 0.0028525461299424566,
+        "kind": "sma",
+        "period": 10,
+        "smoothing": 1,
+        "scale": 0.91620724641277
+      },
+      {
+        "mse": 0.0031722749713699776,
+        "kind": "sma",
+        "period": 8,
+        "smoothing": 1,
+        "scale": 1.1101443853685653
+      },
+      {
+        "mse": 0.004116581359442568,
+        "kind": "ema_roc",
+        "period": 1,
+        "smoothing": 7,
+        "scale": 4.428230753959258
+      },
+      {
+        "mse": 0.004277782843652011,
+        "kind": "ema",
+        "period": 7,
+        "smoothing": 1,
+        "scale": 1.4770437849747284
+      },
+      {
+        "mse": 0.004812091447564087,
+        "kind": "ema_roc",
+        "period": 3,
+        "smoothing": 4,
+        "scale": 1.325513648736412
+      },
+      {
+        "mse": 0.005210377163176983,
+        "kind": "ema_roc",
+        "period": 1,
+        "smoothing": 6,
+        "scale": 4.213502455268681
+      },
+      {
+        "mse": 0.005338401674632316,
+        "kind": "ema",
+        "period": 6,
+        "smoothing": 1,
+        "scale": 1.6870766387200171
+      },
+      {
+        "mse": 0.0053447065146261736,
+        "kind": "ema_roc",
+        "period": 2,
+        "smoothing": 6,
+        "scale": 2.1393224911087265
+      }
+    ],
+    "selection": "SMA10/SMA30; X/SMA9(X); no fitted scales or intercepts"
+  },
+  "evaluations": {
+    "IXIC": {
+      "count": 16,
+      "rmse": [
+        0.0032693926358445366,
+        0.0026830690517217802
+      ],
+      "quadrantEligible": 15,
+      "quadrantAccuracy": 1.0,
+      "nearAxisCount": 5,
+      "farAxisAccuracy": 1.0,
+      "baselineRMSE": [
+        2.070757113974347,
+        1.2007784484917745
+      ],
+      "rmseReduction": [
+        0.9984211607369202,
+        0.9977655586214994
+      ],
+      "maxAbsError": [
+        0.004944819626658159,
+        0.004609282494996592
+      ],
+      "priceMaxError": 0.010937499999272404,
+      "fresh": false,
+      "passes": true
+    },
+    "DJI": {
+      "count": 52,
+      "rmse": [
+        0.002795502230634177,
+        0.002916324547977476
+      ],
+      "quadrantEligible": 51,
+      "quadrantAccuracy": 1.0,
+      "nearAxisCount": 8,
+      "farAxisAccuracy": 1.0,
+      "baselineRMSE": [
+        1.7241104381267596,
+        1.108322344068828
+      ],
+      "rmseReduction": [
+        0.9983785828512984,
+        0.9973687036415135
+      ],
+      "maxAbsError": [
+        0.004951074389225596,
+        0.004958909250689203
+      ],
+      "priceMaxError": 0.0018750000017462298,
+      "fresh": false,
+      "passes": true
+    },
+    "NYA": {
+      "count": 52,
+      "rmse": [
+        0.006554157680581463,
+        0.004487667617047377
+      ],
+      "quadrantEligible": 52,
+      "quadrantAccuracy": 1.0,
+      "nearAxisCount": 4,
+      "farAxisAccuracy": 1.0,
+      "baselineRMSE": [
+        2.536507349113986,
+        1.6018692702470851
+      ],
+      "rmseReduction": [
+        0.997416069903022,
+        0.9971984807372233
+      ],
+      "maxAbsError": [
+        0.0140823492094313,
+        0.010801238967744098
+      ],
+      "priceMaxError": 33.20992187500087,
+      "matchedClosesDiagnostic": {
+        "count": 52,
+        "rmse": [
+          0.00306901780299999,
+          0.003014077485987927
+        ],
+        "quadrantEligible": 52,
+        "quadrantAccuracy": 1.0,
+        "nearAxisCount": 4,
+        "farAxisAccuracy": 1.0,
+        "maxAbsError": [
+          0.0049328950596532195,
+          0.004919610267180019
+        ]
+      },
+      "fresh": true,
+      "passes": true
+    }
+  },
+  "cases": {
+    "2026-01-02": {
+      "reference": [
+        101.46,
+        99.33
+      ],
+      "candidate": [
+        101.45819503021065,
+        99.32801923292719
+      ],
+      "sameLastStepDirection": true
+    },
+    "2026-03-20": {
+      "reference": [
+        98.85,
+        99.06
+      ],
+      "candidate": [
+        98.85457059473354,
+        99.06065530899842
+      ],
+      "sameLastStepDirection": true
+    }
+  },
+  "passed": true,
+  "sourceArtifactSHA256": "d13855ba2a2564d97edcd7ad82e3de58b5be89a56166f5d24d034f3180fd38fa"
+}

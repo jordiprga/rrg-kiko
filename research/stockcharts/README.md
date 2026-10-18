@@ -47,3 +47,9 @@ La evaluación de cuadrantes utiliza tolerancia numérica de 1e-9 en los límite
 ## Diagnóstico adicional de datos
 
 La diferencia NYSE de 33,21 puntos corresponde al 30/01/2026. Al recalcular la misma SMA 10/30/9 con todos los cierres observados de StockCharts en ambos inputs, RMSE X/Y baja a 0,003069/0,003014 y el máximo por eje queda por debajo de 0,005. La fórmula no cambia y no se aplican ajustes por fecha; el cálculo público sigue usando Yahoo. El informe separa esta prueba de datos de la confirmación principal con precios Yahoo. La búsqueda de la ronda2 evaluó 10.476 estructuras X y 1.144 alternativas Y sobre el desarrollo Nasdaq.
+
+## Cuaderno público de método
+
+La pestaña «Qué he hecho» incorpora un cuaderno técnico basado en el código y los resultados guardados: inversión lineal del SVG, manejo de cabezas recortadas, partición temporal, primera rejilla EMA, mínimos cuadrados de las escalas, selección secuencial SMA de X e Y, candidatos próximos, ensayo ARX exploratorio y diagnóstico de cierres. La exportación results-v2.json permite cotejar las tablas públicas con el registro de la segunda ronda. No se ha ejecutado una nueva búsqueda para redactar esta ampliación.
+
+Se aclara que la incertidumbre ±0,01 es un margen asignado, no una calibración estadística; que los conjuntos de la primera ronda se reutilizaron; que el protocolo de la segunda se fijó después de explorar pero antes de recoger NYSE; y que NYSE comparte año, benchmark y exposición con los otros índices. No se realizaron validación cruzada, bootstrap, intervalos de confianza, tests de significación ni demostración de unicidad de la fórmula. El ensayo ARX consta en .cache/contrast/explore.py y x-search.json; no forma parte del script final refine.py.

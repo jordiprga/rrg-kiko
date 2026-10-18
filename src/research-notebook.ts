@@ -1,0 +1,89 @@
+import record from '../research/stockcharts/results-v2.json';
+
+const numeric = (n: number, digits = 6) => n.toLocaleString('es-ES', { maximumFractionDigits: digits });
+const xRows = record.selection.xTop.slice(0, 4).map(r => `<tr><td>${r.kind.toUpperCase()} ${r.short}/${r.long}</td><td>${r.nested ? 'Encadenadas' : 'Paralelas'}</td><td>${numeric(r.scale, 9)}</td><td>${numeric(r.mse, 9)}</td></tr>`).join('');
+const yRows = record.selection.yTop.slice(0, 4).map(r => `<tr><td>${r.kind === 'sma' ? `X / SMA(X, ${r.period})` : `ROC de ${r.period} semanas + EMA ${r.smoothing}`}</td><td>${numeric(r.scale, 9)}</td><td>${numeric(r.mse, 9)}</td></tr>`).join('');
+const repo = 'https://github.com/jordiprga/rrg-kiko/blob';
+const code = `${repo}/bd2af886b96bb3b02c8fc0bf4a1cd8afcba3cbd6`;
+
+export const notebookMarkup = `
+<section class="progress-card research-notebook" aria-labelledby="notebook-title">
+  <span class="step-number">M</span><h3 id="notebook-title">Cuaderno de método: cómo llegué a esa fórmula</h3>
+  <p>Este apartado describe operaciones que constan en los scripts, las observaciones y los resultados guardados. Es un registro de una exploración computacional; no una deducción analítica de la fórmula propietaria ni un estudio completamente prerregistrado.</p>
+
+  <details open><summary>1. Definir qué había que identificar y congelar las entradas</summary>
+    <p>La pregunta operativa fue: ¿qué transformación causal y común de los precios del activo y del benchmark reproduce las coordenadas semanales dibujadas por StockCharts? Separé tres posibles fuentes de desacuerdo: precios y calendario, transformación matemática, y representación del gráfico.</p>
+    <p>Conservé una copia del dataset original, las 18 series locales de precios diarios, el catálogo y el código de cálculo, con hashes SHA-256. La base correspondía al código <code>e8b1155</code> y a cierres hasta el 16/10/2026. Los hashes permiten detectar modificaciones de esa copia; por sí solos no certifican cuándo se creó ni la exactitud del proveedor.</p>
+    <p>Para los índices se usó el cierre de precio, sin ajuste de dividendos. Se seleccionaron las últimas sesiones reales de semanas completadas mediante el calendario XNYS y se cruzaron las fechas del activo y el benchmark, sin rellenar huecos. El semanal se calculó desde esos cierres, no muestreando el indicador diario.</p>
+    <p>El baseline era <code>RS=A/B; X=100×RS/EMA(RS,10); Y=100×X/EMA(X,4)</code>, con EMA recursiva <code>adjust=False</code> y descarte inicial de 50 observaciones. El banco volvió a calcularlo y comprobó que coincidía con el dataset congelado dentro de 10⁻⁶.</p>
+  </details>
+
+  <details open><summary>2. Convertir el SVG de la referencia en una tabla medible</summary>
+    <p>Recorrí la vista gratuita de StockCharts con el navegador. Para Nasdaq y Dow recogí 52 fechas efectivas por activo, del 24/10/2025 al 16/10/2026. Registré coordenadas, precios mostrados, símbolos y fuente. Las posiciones se obtuvieron leyendo atributos geométricos de los elementos dibujados del SVG; no leyendo variables internas de la aplicación ni una API de indicadores.</p>
+    <p>Para dos marcas de eje, de valores <code>v₁,v₂</code> en posiciones <code>p₁,p₂</code>, invertí la transformación lineal. Apliqué la misma operación a ambos ejes, teniendo en cuenta las traslaciones de los grupos SVG. En Y la pendiente es negativa porque los píxeles crecen hacia abajo.</p>
+    <div class="formula-block"><code>v(p) = v₁ + (p − p₁) × (v₂ − v₁) / (p₂ − p₁)</code></div>
+    <p>Ejemplo registrado, Nasdaq al 16/10/2026: el 100 de X estaba en 357,5; la escala era 36,6817156 píxeles por punto y la cabeza en 360,4345372. Por tanto <code>X=100+(360,4345372−357,5)/36,6817156≈100,08</code>. En Y, con centro 156, pendiente −41,7112299 y posición 157,2513369, resultaba <code>Y≈99,97</code>.</p>
+    <p>Hubo una trampa de presentación: las primeras seis cabezas del Dow estaban fijadas al borde de la escala y no representaban su coordenada real. Las contrasté con sus círculos anteriores en la cola de 30 terminada el 22/05/2026 y usé esos círculos. Para la posterior confirmación NYSE utilicé la escala Max.</p>
+    <p>Asigné ±0,01 por eje como margen conservador de lectura. <strong>No es una incertidumbre calibrada mediante lecturas repetidas ni un intervalo de confianza.</strong> Tampoco engloba revisiones del histórico de precios. Nasdaq y Dow se reconstruyeron con valores que encajan al redondeo de dos decimales; no se dispone de coordenadas originales certificadas con más precisión.</p>
+    <p>Comprobé las sesiones festivas del 02/04, 18/06 y 02/07 de 2026, que cerraban en jueves, y la convención de cola: N intervalos son N círculos anteriores más la cabeza. Eso evita emparejar fechas o puntos distintos aunque las curvas parezcan similares.</p>
+  </details>
+
+  <details><summary>3. Separar ajuste, evaluación y regla de aceptación</summary>
+    <div class="progress-table"><table><thead><tr><th>Datos</th><th>Fechas</th><th>Uso real</th></tr></thead><tbody>
+      <tr><td>Nasdaq, 24/10/2025–26/06/2026</td><td>36</td><td>Elegir estructura, parámetros y escalas</td></tr>
+      <tr><td>Nasdaq, 02/07/2026–16/10/2026</td><td>16</td><td>Evaluación de la ronda 1; comprobación reutilizada en la ronda 2</td></tr>
+      <tr><td>Dow, todo el año observado</td><td>52</td><td>Evaluación de la ronda 1; comprobación reutilizada en la ronda 2</td></tr>
+      <tr><td>NYSE, todo el año observado</td><td>52</td><td>Confirmación nueva, recogida después de fijar SMA 10/30/9</td></tr>
+    </tbody></table></div>
+    <p>Las condiciones acordadas eran al menos 40 referencias por activo, RMSE ≤0,20 por eje, reducción ≥50 % respecto al baseline y ≥95 % de cuadrantes evaluables; además, los casos de Kiko y las propiedades del cálculo. Las 16 fechas reservadas del Nasdaq son un subconjunto de sus 52 referencias, no 40 observaciones reservadas.</p>
+    <p>La búsqueda de la ronda 2 siguió usando sólo las 36 fechas iniciales del Nasdaq para puntuar candidatos. Sin embargo, ya habíamos visto los errores de los conjuntos reservados en la ronda 1: <strong>no corresponde llamar ciega a su segunda evaluación</strong>. El protocolo de la ronda 2 registró la fórmula elegida antes de recoger NYSE; no prerregistró desde cero todas las decisiones exploratorias anteriores.</p>
+    <p>No se hizo validación cruzada ni walk-forward. El reparto fue cronológico una sola vez, con una confirmación posterior por activo. NYSE aporta datos no usados para seleccionar el modelo, pero comparte fechas, benchmark y exposición al mercado con Nasdaq y Dow; no son 52 ensayos estadísticos independientes.</p>
+  </details>
+
+  <details><summary>4. Primera ronda: una búsqueda exhaustiva dentro de una familia EMA</summary>
+    <p>El script <code>scripts/contrast.py</code> ensayó el siguiente modelo. EMA con span n usa <code>α=2/(n+1)</code> y la recurrencia <code>Eₜ=αuₜ+(1−α)Eₜ₋₁</code>; sólo incorpora la observación actual y las previas.</p>
+    <div class="formula-block"><code>S = EMA(RS, s)</code><code>X₀ = 100 × S / EMA(S, n)</code><code>Y₀ = 100 × X₀ / EMA(X₀, m)</code><code>X = 100 + aₓ(X₀−100); Y = 100 + aᵧ(Y₀−100)</code></div>
+    <p>Se recorrieron <code>s=1…10</code>, <code>n=10…52</code> y <code>m=2…13</code>: <strong>10×43×12=5.160 combinaciones</strong>. Para cada una estimé una pendiente no negativa por eje, sin intercepto, usando exclusivamente el desarrollo Nasdaq. La pendiente permanecía centrada en 100.</p>
+    <div class="formula-block"><code>a = max(0, Σ zₜrₜ / Σ zₜ²)</code><code>zₜ = predicción sin escalaₜ − 100; rₜ = referenciaₜ − 100</code><code>L = [Σ (X̂ₜ−Xrefₜ)² + Σ (Ŷₜ−Yrefₜ)²] / (2N)</code></div>
+    <p>La función objetivo fue el MSE medio de los dos ejes; cuadrantes y parecido visual no eligieron los parámetros. Ganó <code>s=10,n=24,m=13</code>, con <code>aₓ≈0,927168</code> y <code>aᵧ≈1,085567</code>. Era el mejor de esta rejilla, no una prueba de óptimo sobre todas las fórmulas posibles. Suavizado y momentum quedaron en los límites superiores del espacio ensayado.</p>
+    <p>La evaluación mostró una reducción apreciable, pero no alcanzó los criterios. La descarté para integración. En el registro inicial aparecía 62,5 % de cuadrantes Nasdaq; al corregir el límite numérico de incertidumbre —100,01±0,01 toca el eje y debe excluirse— queda 66,7 %. Los RMSE y la decisión no cambian.</p>
+  </details>
+
+  <details open><summary>5. Segunda ronda: identificar X y después Y</summary>
+    <p>Antes de ampliar la búsqueda consulté la documentación de los indicadores y la guía del titular, que no revelan la fórmula completa. La búsqueda web también mostró una <a href="https://scan.stockcharts.com/discussion/2786/rs-ratio-rs-momentum-under-rank-by" target="_blank" rel="noopener noreferrer">discusión de la comunidad de StockCharts</a> donde un usuario conjeturaba medias simples de 10/30 semanas y un ROC como aproximación. Esa conjetura es contexto de la exploración, no documentación oficial ni validación de nuestra fórmula. El contraste cuantitativo posterior es el que permite evaluar estas familias.</p>
+    <p>Tras la petición de ampliar la investigación, cambié la familia de modelos y separé los ejes. Para X comparé medias simples y exponenciales; ventanas cortas de 1 a 30 y largas desde <code>max(10,corta+1)</code> hasta 104. Para cada pareja probé dos estructuras:</p>
+    <div class="formula-block"><code>Paralela: X₀ = 100 × MA(RS,s) / MA(RS,n)</code><code>Encadenada: X₀ = 100 × MA(RS,s) / MA(MA(RS,s),n)</code></div>
+    <p>Fueron <strong>${numeric(record.selection.xTested, 0)} estructuras X</strong>. Cada una se puntuó por MSE de X en las 36 fechas de desarrollo, permitiendo una pendiente positiva centrada en 100, estimada allí. Los siguientes valores son errores de <em>ajuste</em> con esa escala estimada; no métricas del conjunto de evaluación:</p>
+    <div class="progress-table"><table><thead><tr><th>Medias</th><th>Estructura</th><th>Escala ajustada</th><th>MSE X de ajuste</th></tr></thead><tbody>${xRows}</tbody></table></div>
+    <p>La SMA paralela 10/30 obtuvo MSE <code>0,000008523</code>; el siguiente candidato guardado, SMA encadenada 11/24, dio <code>0,005393898</code>. Esa separación en la muestra de ajuste motivó continuar con 10/30. Los recuentos son configuraciones ensayadas, no necesariamente predicciones distintas ni ensayos independientes. No la deduje de una imagen ni de una identidad algebraica; salió de enumerar y puntuar candidatos.</p>
+    <p>Con X calculado como SMA 10/30, sin escala adicional, busqué Y. Comparé <code>100×X/MA(X,m)</code> para SMA y EMA, con m de 1 a 52, y tasas de cambio <code>100×(Xₜ/Xₜ₋ₖ−1)</code> suavizadas mediante SMA o EMA: k de 1 a 26 y suavizado de 1 a 20. Son <strong>104+26×20×2=1.144 alternativas Y</strong>. También se puntuaron sólo en desarrollo Nasdaq.</p>
+    <div class="progress-table"><table><thead><tr><th>Modelo de momentum</th><th>Escala ajustada</th><th>MSE Y de ajuste</th></tr></thead><tbody>${yRows}</tbody></table></div>
+    <p>Ganó <code>Y=100×X/SMA(X,9)</code>. Las pendientes estimadas de los ganadores fueron <code>1,000616312</code> para X y <code>1,000562730</code> para Y. Eliminé esas escalas antes de la confirmación NYSE y conservé la versión simple de factores exactamente 1. La mejora marginal de ajuste no justificaba mantener esa calibración; esta simplificación fue una decisión tomada después de ver el ajuste.</p>
+    <p>Los dos ejes se buscaron <strong>secuencialmente</strong>, no mediante una optimización conjunta de todos los modelos X/Y. El script final comprueba que los ganadores siguen siendo 10/30 y 9 al repetir la búsqueda. Esa comprobación registra el resultado encontrado; no es, por sí sola, validación fuera de muestra.</p>
+    <p>También quedó registrado un ensayo exploratorio ARX de orden bajo: regresión por mínimos cuadrados de X respecto a sus retardos y a diferencias de log(RS), órdenes 1…4, descartando polos de módulo ≥1 y comprobando la simulación recursiva. Su mejor MSE X de ajuste fue aproximadamente 0,298, muy por encima de la SMA. No lo integré ni lo usé para elegir Y; ese ensayo quedó en el archivo exploratorio local, fuera del script final de búsqueda.</p>
+  </details>
+
+  <details><summary>6. Medir el error sin confundirlo con el redondeo o los cuadrantes</summary>
+    <div class="formula-block"><code>RMSEₓ = √[Σ (X̂ₜ − Xrefₜ)² / N]; análogo para Y</code><code>Reducciónₓ = 1 − RMSEₓ,nuevo / RMSEₓ,baseline</code><code>Cuadrante: signos de (X−100, Y−100); un eje exacto se trata aparte</code></div>
+    <p>Los RMSE utilizan todas las fechas del conjunto, incluidas las próximas al eje. La coincidencia de cuadrantes excluye referencias cuyo margen ±0,01 alcanza 100, con tolerancia numérica 10⁻⁹. Se informa también por separado de las observaciones a menos de 0,10 del centro. En la evaluación final hay <strong>15/15</strong> cuadrantes correctos en Nasdaq reservado, <strong>51/51</strong> en Dow y <strong>52/52</strong> en NYSE: los denominadores no son todos iguales al número de fechas.</p>
+    <p>Nasdaq y Dow tienen error máximo por eje inferior a 0,005: eso es compatible con el redondeo de una referencia de dos decimales. Un RMSE de 0,003 puntos del gráfico —unas tres milésimas— no demuestra exactitud a seis decimales del indicador oculto. <strong>La precisión de medición limita la conclusión.</strong></p>
+    <p>Para los casos de Kiko comprobé el cuadrante final y los signos de los incrementos del último tramo, <code>sign(Xₜ−Xₜ₋₁)</code> y <code>sign(Yₜ−Yₜ₋₁)</code>. Eso no equivale a verificar formalmente todas las velocidades, curvaturas o el sentido global de cada trayectoria. El gráfico completo fue un diagnóstico visual adicional.</p>
+  </details>
+
+  <details><summary>7. Un experimento de control para distinguir datos de fórmula</summary>
+    <p>En NYSE, la confirmación principal usó precios Yahoo y la fórmula ya fijada. Dio RMSE X/Y de 0,006554/0,004488 y error máximo X de 0,014082. Al contrastar precios apareció una diferencia de 33,209922 puntos entre proveedores el 30/01/2026.</p>
+    <p>Hice una segunda ejecución de diagnóstico: reemplacé <em>todos</em> los cierres observados de NYSE y S&P en esa ventana por los mostrados en StockCharts, manteniendo el histórico previo disponible de Yahoo para las ventanas iniciales. No cambié períodos, escala ni fórmula. El RMSE bajó a 0,003069/0,003014 y los máximos a 0,004933/0,004920.</p>
+    <p>Además comprobé las últimas 15 fechas, para las que las 38 observaciones necesarias ya proceden enteramente de la ventana de cierres observados. Los máximos siguieron por debajo de 0,005. Esto respalda que el pequeño residuo adicional venía de las entradas. No demuestra cuál de los proveedores era correcto ni cómo obtuvo StockCharts su histórico.</p>
+    <p>Este control no es otra confirmación independiente: reutiliza los cierres observados de la misma referencia. Se mantiene separado del resultado principal con Yahoo, y la aplicación pública sigue usando Yahoo.</p>
+  </details>
+
+  <details><summary>8. Reproducir y acotar lo que se ha demostrado</summary>
+    <p>Las pruebas verifican benchmark contra sí mismo en (100,100), invariancia al multiplicar precios por constantes positivas, conservación de resultados al añadir precios futuros, ausencia de relleno de huecos y ámbito semanal/GSPC. «Causal» aquí significa que el algoritmo no utiliza observaciones futuras; no que demuestre una relación causal económica.</p>
+    <p>Una SMA de 30 requiere 30 valores RS y su momentum de 9 requiere otros ocho anteriores: el primer resultado completo necesita <strong>30+9−1=38 observaciones comunes</strong>. Mantuvimos el descarte de 50 de la versión previa para conservar el inicio visible. Una prueba adicional acorta el histórico anterior y verifica que los puntos con suficiente memoria siguen siendo iguales.</p>
+    <p>No se calcularon intervalos de confianza, tests de significación, bootstrap ni una corrección por la búsqueda de miles de modelos. La muestra tiene un solo año y series correlacionadas. La confirmación NYSE reduce el riesgo de ajuste exclusivo al Nasdaq, pero no lo elimina para otros regímenes o universos.</p>
+    <p>Lo demostrado es una reproducción muy próxima de las observaciones recogidas y las propiedades comprobadas del algoritmo. No se accedió al código propietario, no se probó la unicidad de la fórmula y no se validó su traslado a diario, sectores u otros benchmarks.</p>
+    <div class="formula-block"><code>python -m scripts.contrast</code><code>python -m scripts.refine</code><code>python -m pytest tests -q</code></div>
+    <p>Los dos primeros comandos requieren las copias locales de precios descritas en el README; el repositorio incluye un fixture de 110 semanas para ejecutar las pruebas de regresión. <code>selection.json</code> guarda candidatos; <code>differences.csv</code>, diferencias por fecha; <code>result.json</code>, evaluaciones y hashes. Los hashes son de integridad, no una prueba de independencia estadística.</p>
+    <p>Evidencias consultables: <a href="${code}/scripts/contrast.py" target="_blank" rel="noopener noreferrer">búsqueda EMA</a>, <a href="${code}/scripts/refine.py" target="_blank" rel="noopener noreferrer">búsqueda SMA/momentum y evaluación</a>, <a href="${repo}/main/research/stockcharts/results-v2.json" target="_blank" rel="noopener noreferrer">exportación de resultados registrados</a>, <a href="${repo}/main/research/stockcharts/observations.csv" target="_blank" rel="noopener noreferrer">referencias Nasdaq/Dow</a>, <a href="${repo}/main/research/stockcharts/confirmation-nya.csv" target="_blank" rel="noopener noreferrer">confirmación NYSE</a> y <a href="${code}/research/stockcharts/read-visible-svg.js" target="_blank" rel="noopener noreferrer">lector de geometría SVG</a>.</p>
+  </details>
+</section>`;

@@ -1,8 +1,11 @@
+import { notebookMarkup } from './research-notebook';
+
 export const progressMarkup = `
 <section id="progress-panel" class="progress-panel" role="tabpanel" aria-labelledby="progress-tab" hidden>
   <article class="progress-intro"><div class="eyebrow">18 OCT 2026 · QA DE KIKO</div>
     <h2>Qué he hecho</h2><p>De dos gráficos que no cuadraban a una fórmula semanal que reproduce la referencia con un error de milésimas.</p>
     <span class="progress-status">Aproximación validada · índices semanales frente al S&P 500</span>
+    <p class="progress-note">Además del resumen, el cuaderno de método detalla las operaciones reales, los modelos descartados y las limitaciones. Despliega sus apartados para seguir el experimento.</p>
   </article>
   <section class="progress-card"><span class="step-number">01</span><h3>Primero, comprobar el problema</h3>
     <p>Kiko tenía razón: comparar Nasdaq Composite con S&P 500 el 2 de enero de 2026 daba <strong>(99,61; 99,68), Rezagado</strong> en la primera versión, mientras StockCharts lo colocaba en Debilitándose. El cierre del S&P coincidía: 6.858,47. Cambiar Nasdaq 100 por Composite no resolvía la diferencia.</p>
@@ -27,6 +30,7 @@ export const progressMarkup = `
     <p>Las ventanas incluyen el punto actual y sólo semanas anteriores. Todos los activos comparten los parámetros 10/30/9. <strong>No hay correcciones por ticker, fecha, ni escalas ajustadas.</strong> El cálculo necesita 38 observaciones semanales comunes; conservamos 50 iniciales fuera de la vista para mantener la fecha de inicio anterior.</p>
     <p>La búsqueda comparó EMA y SMA, medias paralelas y encadenadas, y alternativas de momentum. Las escalas estimadas en ajuste eran prácticamente 1: se retiraron antes de la confirmación nueva.</p>
   </section>
+  ${notebookMarkup}
   <section class="progress-card"><span class="step-number">06</span><h3>Comprobar que funciona fuera del ajuste</h3>
     <p>Nasdaq reservado y Dow ya se habían examinado al evaluar la primera ronda: sus comprobaciones se reutilizan y no las presento como una segunda prueba ciega. Para tener una confirmación nueva, <strong>fijé la fórmula y después recogí 52 semanas de NYSE Composite</strong>, que no se usaron para elegirla.</p>
     <div class="progress-table"><table><thead><tr><th>Conjunto</th><th>Fechas</th><th>RMSE X</th><th>RMSE Y</th><th>Cuadrantes*</th></tr></thead><tbody>
