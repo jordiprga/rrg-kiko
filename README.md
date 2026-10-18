@@ -77,8 +77,16 @@ Datos de [Yahoo Finance](https://finance.yahoo.com/) mediante [yfinance](https:/
 
 La aplicación utiliza TypeScript, Vite y ECharts; Python prepara los históricos. Se aloja en GitHub Pages y se actualiza mediante GitHub Actions.
 
-## Contraste StockCharts · 18/10/2026
+## Contraste StockCharts · 18/10/2026 · primera ronda (superada)
 
 Se han recogido 52 semanas de Nasdaq Composite y Dow Jones frente al S&P 500. Se conserva una copia local identificada de precios, código y dataset para comparar sobre la misma muestra. Tras reservar el último 30 % del Nasdaq y todo Dow, se probaron 5.160 variantes EMA. La mejor reduce el RMSE más del 60 %, pero sigue entre 0,39 y 0,81 puntos por eje y no alcanza el 95 % de cuadrantes. **No se sustituye el cálculo actual.** Los dos casos de Kiko sí encajan en cuadrante y último sentido con la candidata, lo que por sí solo no basta para promoverla.
 
 [Protocolo, referencias y diagnóstico](research/stockcharts/README.md). El banco se ejecuta con `python -m scripts.contrast`; produce un informe y gráficos locales, sin modificar la web. Las vistas identifican método, versión y parámetros; los validadores aceptan también snapshots anteriores sin esos metadatos de vista.
+
+## Cálculo semanal validado y pestaña «Qué he hecho»
+
+La segunda ronda amplía la búsqueda y encuentra una aproximación mucho más precisa: `RS=activo/benchmark`, `X=100*SMA(RS,10)/SMA(RS,30)` e `Y=100*X/SMA(X,9)`. No emplea escalas ajustadas, correcciones por ticker ni información futura. La promoción cubre sólo índices semanales frente al S&P 500; las demás vistas mantienen EMA. Los snapshots nuevos usan `relative-models-v2` como contenedor y método/versión/parámetros por vista. Los validadores siguen admitiendo el esquema anterior.
+
+Tras elegir sólo con las primeras 36 fechas Nasdaq, el modelo se confirmó con un activo nuevo: NYSE Composite, 52 semanas recogidas después de fijar la fórmula. RMSE X/Y de 0,0066/0,0045 y 100 % de cuadrantes evaluables. Nasdaq y Dow reproducen los puntos dentro del redondeo a dos decimales. Es una aproximación empírica; no se afirma haber obtenido el código propietario JdK.
+
+La pestaña pública «Qué he hecho» explica la secuencia, las fórmulas, los errores de la primera ronda, los resultados nuevos y sus límites. Enlace directo con `#que-he-hecho`. El banco local se reproduce con `python -m scripts.refine`.

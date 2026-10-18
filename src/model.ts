@@ -9,8 +9,8 @@ export interface GroupSettings {
   name: string; benchmarks: string[]; defaultBenchmark: string; defaults: string[];
 }
 export interface View {
-  method?: 'relative-ema-v1'; calculationVersion?: 1;
-  parameters: { n: number; m: number };
+  method?: 'relative-ema-v1' | 'relative-sma-10-30-9-v2'; calculationVersion?: 1 | 2;
+  parameters: Record<string, number>;
   benchmark: [string, number][];
   assets: Record<string, Point[]>;
 }
@@ -89,17 +89,19 @@ export function scaleBounds(points: Point[], center = false): [number, number, n
 
 export function validateDataset(value: unknown): Dataset {
   const d = value as Dataset;
-  if (!d || d.version !== 1 || d.method !== 'relative-ema-v1' || !Array.isArray(d.catalog) || !d.catalog.length
+  if (!d || d.version !== 1 || !['relative-ema-v1', 'relative-models-v2'].includes(d.method) || !Array.isArray(d.catalog) || !d.catalog.length
     || !d.groups || !d.views || !Number.isFinite(Date.parse(d.generatedAt))) throw new Error('El dataset tiene un formato incompatible.');
   for (const group of Object.values(d.groups)) {
     if (!group || !group.benchmarks.includes(group.defaultBenchmark) || !group.defaults.length) throw new Error('Catálogo inválido.');
     for (const benchmark of group.benchmarks) for (const tf of ['daily', 'weekly'] as const) {
       const view = d.views[benchmark]?.[tf];
       if (!view || view.benchmark.length < 31 || !view.assets) throw new Error('Falta histórico válido.');
-      if ((view.method !== undefined && view.method !== 'relative-ema-v1')
-        || (view.calculationVersion !== undefined && view.calculationVersion !== 1)
-        || view.parameters.n !== (tf === 'weekly' ? 10 : 50)
-        || view.parameters.m !== (tf === 'weekly' ? 4 : 20)) throw new Error('Método o parámetros incompatibles.');
+      const method = view.method ?? d.method, sma = method === 'relative-sma-10-30-9-v2';
+      const parameters = sma ? { short: 10, long: 30, m: 9 } : { n: tf === 'weekly' ? 10 : 50, m: tf === 'weekly' ? 4 : 20 };
+      if (!(method === 'relative-ema-v1' || (sma && benchmark === 'GSPC' && tf === 'weekly'))
+        || (view.calculationVersion ?? 1) !== (sma ? 2 : 1)
+        || !view.parameters || Object.keys(view.parameters).length !== Object.keys(parameters).length
+        || Object.entries(parameters).some(([k, v]) => view.parameters[k] !== v)) throw new Error('Método o parámetros incompatibles.');
       const check = (rows: (string | number)[][], columns: number) => {
         let previous = '';
         for (const row of rows) {

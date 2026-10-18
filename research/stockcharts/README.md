@@ -1,5 +1,7 @@
 # Contraste semanal con StockCharts
 
+**Actualización, ronda 2:** SMA 10/30/9 supera los criterios y la confirmación nueva con 52 semanas de NYSE Composite. El resultado EMA que sigue es el registro de la primera ronda, ya superado. Véase [protocolo de la ronda 2](protocol-v2.json) y ejecutar `python -m scripts.refine`.
+
 Investigación del 18/10/2026. No forma parte del directorio público de la web.
 
 `observations.csv` conserva 52 fechas efectivas por activo, desde 24/10/2025 hasta 16/10/2026: `$COMPQ`/`^IXIC` y `$INDU`/`^DJI`, benchmark `$SPX`/`^GSPC`. Cada fila incluye cierres, fuente y precisión. `source.json` describe la inversión de las coordenadas SVG, sus límites y un ejemplo de calibración. `read-visible-svg.js` conserva el procedimiento de lectura de los elementos dibujados. No se consultan variables internas de la web.
@@ -14,7 +16,7 @@ La mejor candidata usa suavizado 10, referencia 24, momentum 13 y escalas X=0,92
 
 | Evaluación | RMSE X/Y actual | RMSE X/Y candidata | Cuadrantes candidata |
 |---|---|---|---|
-| Nasdaq reservado | 2,071 / 1,201 | 0,814 / 0,475 | 62,5 % |
+| Nasdaq reservado | 2,071 / 1,201 | 0,814 / 0,475 | 66,7 % |
 | Dow completo | 1,724 / 1,108 | 0,656 / 0,392 | 72,5 % |
 
 Se conserva `relative-ema-v1`. El umbral es 0,20 por eje y 95 % de cuadrantes. Suavizado y momentum óptimos están en el límite de la búsqueda; ampliar el espacio sería otro experimento, con nueva evaluación independiente para no reutilizar estos resultados como ajuste.
@@ -29,3 +31,15 @@ python -m scripts.contrast --baseline .cache/contrast/baseline --output .cache/c
 ```
 
 Se generan `REPORT.md`, `result.json`, `differences.csv` y `comparison.png`: trayectorias con ejes comunes, series X/Y por fecha, diferencias, cruces de 100, particiones y métricas de incertidumbre. El script verifica los hashes y recalcula la versión anterior contra el dataset congelado antes de comparar. No escribe en `public/` ni cambia el método activo.
+
+## Resultado de la segunda ronda
+
+Se amplió la búsqueda por petición posterior del usuario. Usando sólo las 36 fechas iniciales del Nasdaq, X encajó como `100*SMA(RS,10)/SMA(RS,30)` e Y como `100*X/SMA(X,9)`, sin escalas ajustadas. Nasdaq/Dow coinciden a menos de 0,005 puntos por eje.
+
+Los conjuntos de evaluación originales ya se habían examinado; no se presentan como otra prueba ciega. La fórmula se congeló en protocol-v2.json antes de recoger las 52 semanas de NYSE Composite de confirmation-nya.csv. RMSE en la confirmación nueva: X=0,006554 / Y=0,004488, 100 % de cuadrantes evaluables y reducción >99,7 % frente al método inicial. Hay diferencias de cierres entre proveedores hasta 33,21 puntos NYSE; error máximo de coordenadas 0,0141, sin reajustes para compensarlo.
+
+Las pruebas de integración usan tests/fixtures/weekly-prices.csv (110 semanas de cierres de Yahoo, derivadas de las copias identificadas). La copia completa de precios sigue local. El informe detallado y los gráficos están en .cache/contrast/results-v2; la web explica el trabajo en la pestaña «Qué he hecho».
+
+La promoción afecta únicamente a índices semanales frente a GSPC. El identificador propio es relative-sma-10-30-9-v2. Es una inferencia muy fiel en esta muestra, no una especificación demostrada del código original JdK.
+
+La evaluación de cuadrantes utiliza tolerancia numérica de 1e-9 en los límites de incertidumbre: un valor de referencia 100,01 con ±0,01 toca el eje y se excluye. Esta corrección cambia el porcentaje de la primera candidata Nasdaq de 62,5 % a 66,7 % al excluir ese punto; no cambia las decisiones ni los RMSE.

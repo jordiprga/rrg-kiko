@@ -1,0 +1,22 @@
+{
+  "round": 2,
+  "fixedBeforeFreshEvaluation": true,
+  "development": "Only original first 36 Nasdaq dates; no ticker/date-specific parameters",
+  "selection": "Compare EMA and SMA short 1..30, long 10..104, parallel/nested; then SMA/EMA momentum 1..52 and smoothed ROC lag1..26 smoothing1..20 on Nasdaq training",
+  "xSelection": "100*SMA(RS,10)/SMA(RS,30)",
+  "ySelection": "100*X/SMA(X,9)",
+  "scale": "Unscaled; slopes ~1 in training. No intercept or fitted scaling in selected method",
+  "oldEvaluation": "Original last16 Nasdaq and full Dow already examined in round1; report as reused checks, not fresh blind holdout",
+  "freshEvaluation": "52 NYSE Composite (/^NYA) weeks vs /^GSPC; collect only after freezing formula. Never used for model selection.",
+  "criteria": {
+    "minimum": 40,
+    "rmseMaxPerAxis": 0.2,
+    "rmseReductionMin": 0.5,
+    "quadrantMin": 0.95,
+    "uncertaintyPerAxis": 0.01
+  },
+  "freezeArtifacts": {
+    "x-search.json": "91be4030c39602b86053d40ce7287e8b65bb0a7d0f307173a390d684ae239e86",
+    "y-search.json": "6a9389d4f9a11c300bb1c26213e807fcdb4257bf70e1485715077b0224c9cd52"
+  }
+}

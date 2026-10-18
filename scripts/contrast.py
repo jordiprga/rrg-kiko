@@ -38,7 +38,7 @@ def quadrant(values):
 def metrics(predicted, reference, uncertainty):
     delta = predicted - reference
     distance = np.min(np.abs(reference - 100), axis=1)
-    mask = distance > uncertainty
+    mask = distance > uncertainty + 1e-9
     far = distance >= .10
     agreement = quadrant(predicted) == quadrant(reference)
     return {'count': len(reference), 'rmse': np.sqrt(np.mean(delta ** 2, axis=0)).tolist(),

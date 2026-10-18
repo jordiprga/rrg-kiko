@@ -24,5 +24,14 @@
       157.25133689839578
     ]
   },
-  "warmupStockCharts": "Unknown; not inferred from displayed one-year range."
+  "warmupStockCharts": "Unknown; not inferred from displayed one-year range.",
+  "round2Confirmation": {
+    "symbol": "$NYA/^NYA",
+    "source": "https://stockcharts.com/freecharts/rrg/",
+    "range": "2025-10-24/2026-10-16",
+    "method": "Rendered head transforms after Max scaling, 52 weekly observations; no clamped heads",
+    "uncertaintyPerAxis": 0.01,
+    "collectedAfter": "Unscaled SMA10/30/9 frozen in protocol-v2.json",
+    "priceSource": "Yahoo Finance ^NYA downloaded 2026-10-18; five years through 2026-10-16; research-only, not added to public catalog"
+  }
 }

@@ -15,6 +15,7 @@ import yfinance as yf
 
 ROOT = Path(__file__).resolve().parents[1]
 PARAMETERS = {"daily": (50, 20), "weekly": (10, 4)}
+SMA_METHOD = "relative-sma-10-30-9-v2"
 
 
 class DataProvider(Protocol):
@@ -80,9 +81,22 @@ def indicators(asset: pd.Series, benchmark: pd.Series, n: int, m: int) -> pd.Dat
     return pd.DataFrame({"x": x, "y": y, "price": pair["price"]}).iloc[5 * n:]
 
 
+def sma_indicators(asset: pd.Series, benchmark: pd.Series) -> pd.DataFrame:
+    """Empirically validated weekly approximation; no claim of original JdK code."""
+    pair = pd.concat([asset.rename("price"), benchmark.rename("benchmark")], axis=1).dropna()
+    pair = pair[(pair.price > 0) & (pair.benchmark > 0)]
+    rs = pair.price / pair.benchmark
+    x = 100 * rs.rolling(10).mean() / rs.rolling(30).mean()
+    y = 100 * x / x.rolling(9).mean()
+    # Keep the same first available date as the former weekly engine.
+    # The SMA itself has finite memory: 38 common weekly observations suffice.
+    return pd.DataFrame({"x": x, "y": y, "price": pair.price}).iloc[50:]
+
+
 def make_view(prices: dict[str, pd.Series], ids: list[str], benchmark: str,
               timeframe: str, schedule: pd.DataFrame, now: pd.Timestamp) -> dict:
     n, m = PARAMETERS[timeframe]
+    use_sma = timeframe == "weekly" and benchmark == "GSPC"
     sessions = pd.DatetimeIndex(closed_schedule(schedule, now).index).tz_localize(None)
     if timeframe == "weekly":
         sessions = completed_week_ends(schedule, now)
@@ -92,7 +106,7 @@ def make_view(prices: dict[str, pd.Series], ids: list[str], benchmark: str,
         if identity not in prices:
             continue
         series = prices[identity].loc[prices[identity].index.isin(sessions)]
-        computed = indicators(series, reference, n, m)
+        computed = sma_indicators(series, reference) if use_sma else indicators(series, reference, n, m)
         if len(computed) < 31:
             raise ValueError(f"Histórico insuficiente: {identity}/{timeframe}")
         assets[identity] = [
@@ -103,8 +117,8 @@ def make_view(prices: dict[str, pd.Series], ids: list[str], benchmark: str,
         raise ValueError(f"Sin activos para {benchmark}/{timeframe}")
     first = min(values[0][0] for values in assets.values())
     return {
-        "method": "relative-ema-v1", "calculationVersion": 1,
-        "parameters": {"n": n, "m": m},
+        "method": SMA_METHOD if use_sma else "relative-ema-v1", "calculationVersion": 2 if use_sma else 1,
+        "parameters": {"short": 10, "long": 30, "m": 9} if use_sma else {"n": n, "m": m},
         "benchmark": [[day.date().isoformat(), round(float(price), 6)]
                       for day, price in reference.items() if day.date().isoformat() >= first],
         "assets": assets,
@@ -167,7 +181,7 @@ def refresh(provider: DataProvider, output: Path, now: pd.Timestamp, offline: bo
         "sourceUrl": "https://finance.yahoo.com/", "latestSession": expected,
         "expectedWeeklySession": completed_week_ends(schedule, now)[-1].date().isoformat(),
         "priceConvention": "Índices: cierre de precio. ETFs: cierre ajustado por dividendos y splits. No mezclar familias.",
-        "method": "relative-ema-v1", "usage": "personal-research",
+        "method": "relative-models-v2", "usage": "personal-research",
         "catalog": [i for i in config["instruments"] if i["id"] in prices and i["group"] in groups],
         "groups": groups, "views": views, "errors": errors,
     }

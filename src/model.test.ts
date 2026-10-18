@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseState, serialize, defaults, trail, indexAtOrBefore, quadrant, scaleBounds, validDate, visibleWindow, draggedEnd, type Dataset, type Point } from './model';
+import { parseState, serialize, defaults, trail, indexAtOrBefore, quadrant, scaleBounds, validDate, visibleWindow, draggedEnd, validateDataset, type Dataset, type Point } from './model';
 
 const data = {
   catalog: ['GSPC', 'NDX', 'IXIC', 'DJI', 'RUT'].map(id => ({ id, group: 'indices' })),
@@ -56,6 +56,28 @@ describe('Historical navigation', () => {
   it('does not use future points before the first date', () => expect(trail(points, '2026-01-01', 30)).toEqual([]));
   it('represents n intervals with n+1 available points and does not use future data', () => expect(trail(points, '2026-10-14', 1)).toEqual(points.slice(1, 3)));
   it('uses the available history when the requested tail is longer', () => expect(trail(points, '2026-10-16', 30)).toEqual(points));
+});
+
+describe('Per-view calculation contract', () => {
+  function snapshot(mixed = false): any {
+    const benchmark = Array.from({ length: 31 }, (_, i) => [new Date(Date.UTC(2026, 0, i + 1)).toISOString().slice(0, 10), 100]);
+    const assets = Object.fromEntries(['NDX', 'IXIC', 'DJI', 'RUT'].map(id => [id, benchmark.map(([date]) => [date, 100, 100, 100])]));
+    const view = (weekly: boolean) => ({ benchmark, assets, parameters: weekly ? { n: 10, m: 4 } : { n: 50, m: 20 } });
+    const weekly = mixed ? { ...view(true), method: 'relative-sma-10-30-9-v2', calculationVersion: 2, parameters: { short: 10, long: 30, m: 9 } } : view(true);
+    return { ...data, version: 1, method: mixed ? 'relative-models-v2' : 'relative-ema-v1', generatedAt: '2026-10-18T08:00:00Z',
+      groups: { indices: { ...data.groups.indices, benchmarks: ['GSPC'] } },
+      views: { GSPC: { daily: { ...view(false), ...(mixed ? { method: 'relative-ema-v1', calculationVersion: 1 } : {}) }, weekly } } };
+  }
+  it('accepts legacy snapshots and the validated mixed-method contract', () => {
+    expect(validateDataset(snapshot()).method).toBe('relative-ema-v1');
+    expect(validateDataset(snapshot(true)).views.GSPC.weekly.method).toBe('relative-sma-10-30-9-v2');
+  });
+  it('rejects unvalidated parameters and daily SMA promotion', () => {
+    const altered = snapshot(true); altered.views.GSPC.weekly.parameters.short = 11;
+    expect(() => validateDataset(altered)).toThrow('parámetros');
+    const daily = snapshot(true); daily.views.GSPC.daily = daily.views.GSPC.weekly;
+    expect(() => validateDataset(daily)).toThrow('parámetros');
+  });
 });
 
 describe('Quadrants and chart scale', () => {

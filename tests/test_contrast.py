@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 
 from scripts.contrast import RESEARCH, candidate, metrics, split_dates
+from scripts.market import sma_indicators, make_view, schedule_for
+from pathlib import Path
 
 
 def test_holdout_is_chronological_and_never_overlaps_training():
@@ -41,3 +43,45 @@ def test_quadrant_evaluation_separates_uncertainty_and_near_axis():
     assert result['nearAxisCount'] == 2
     assert result['quadrantAccuracy'] == .5
     assert result['farAxisAccuracy'] == 0
+    assert metrics(np.array([[101., 101]]), np.array([[100.01, 101.]]), .01)['quadrantEligible'] == 0
+
+
+def weekly_fixture():
+    return pd.read_csv(Path(__file__).parent / 'fixtures/weekly-prices.csv', index_col=0, parse_dates=True)
+
+
+def test_sma_matches_real_stockcharts_references_and_fresh_confirmation():
+    prices = weekly_fixture()
+    refs = pd.read_csv(RESEARCH / 'observations.csv', index_col=0, parse_dates=True).sort_index()
+    for identity in ['IXIC', 'DJI', 'NYA']:
+        calculated = sma_indicators(prices[identity], prices.GSPC)
+        if identity == 'NYA':
+            ref = pd.read_csv(RESEARCH / 'confirmation-nya.csv', index_col=0, parse_dates=True).sort_index()
+            expected = ref[['x', 'y']]
+        else:
+            expected = refs[[identity.lower() + '_x', identity.lower() + '_y']]
+        error = calculated.loc[expected.index, ['x', 'y']].to_numpy() - expected.to_numpy()
+        assert np.sqrt(np.mean(error ** 2, axis=0)).max() < .01
+        assert np.max(abs(error)) < (.015 if identity == 'NYA' else .0051)
+
+
+def test_sma_is_causal_scale_invariant_and_benchmark_neutral():
+    prices = weekly_fixture()
+    full = sma_indicators(prices.IXIC, prices.GSPC)
+    np.testing.assert_allclose(full[['x', 'y']], sma_indicators(prices.IXIC * 13, prices.GSPC * .07)[['x', 'y']])
+    np.testing.assert_allclose(sma_indicators(prices.GSPC, prices.GSPC)[['x', 'y']], 100)
+    pd.testing.assert_frame_equal(full.iloc[:-15], sma_indicators(prices.IXIC.iloc[:-15], prices.GSPC.iloc[:-15]))
+    missing = sma_indicators(prices.IXIC.drop(prices.index[-2]), prices.GSPC)
+    assert prices.index[-2] not in missing.index and not missing.isna().any().any()
+
+
+def test_sma_promotion_is_limited_to_weekly_gspc():
+    prices = weekly_fixture()
+    now = pd.Timestamp('2026-10-18T08:00:00Z')
+    data = {'A': prices.IXIC, 'GSPC': prices.GSPC, 'OTHER': prices.GSPC}
+    promoted = make_view(data, ['A'], 'GSPC', 'weekly', schedule_for(now), now)
+    assert promoted['method'] == 'relative-sma-10-30-9-v2'
+    assert promoted['parameters'] == dict(short=10, long=30, m=9)
+    other = make_view(data, ['A'], 'OTHER', 'weekly', schedule_for(now), now)
+    assert other['method'] == 'relative-ema-v1'
+    assert other['parameters'] == dict(n=10, m=4)

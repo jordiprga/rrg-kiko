@@ -1,4 +1,5 @@
 import './style.css';
+import { progressMarkup } from './progress';
 import { initChart, rotationOptions, benchmarkOptions, palette, type PlotAsset } from './charts';
 import { defaults, parseState, serialize, trail, indexAtOrBefore, scaleBounds, quadrant, quadrants,
   validateDataset, visibleWindow, draggedEnd, type Dataset, type State, type Group, type Timeframe, type Point } from './model';
@@ -59,7 +60,7 @@ async function boot() {
               <p>La vista gratuita está limitada a un conjunto semanal fijo. Las opciones de configuración para miembros las estudié en su documentación; no accedí a una cuenta de pago. Esa revisión sirvió para reconstruir la interacción y añadir lo que pediste: diario/semanal, selección de activos y enlace permanente.</p>
               <h4>Qué averigüé sobre el cálculo original</h4>
               <p>Revisé también la <a href="https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/rrg-relative-strength" target="_blank" rel="noopener noreferrer">documentación de sus indicadores</a>. StockCharts usa <strong>JdK RS-Ratio</strong> en horizontal, para representar la tendencia de fuerza relativa, y <strong>JdK RS-Momentum</strong> en vertical, para el momentum del primer indicador. Ambos están normalizados alrededor de 100.</p>
-              <p><strong>En las páginas consultadas no encontré una especificación completa del algoritmo con la que reproducir y verificar sus valores.</strong> Conocer el concepto y los nombres de los ejes no basta para deducir su fórmula exacta. Por eso no hemos calculado los JdK originales: implementamos una alternativa explícita basada en medias exponenciales. El contraste semanal del 18/10/2026 usa 52 fechas de Nasdaq Composite y Dow Jones. La mejor variante EMA de la búsqueda reduce el error, pero no alcanza RMSE ≤0,20 por eje ni 95 % de cuadrantes en evaluación independiente. Por eso conservamos este cálculo; no afirmamos equivalencia con JdK.</p>
+              <p><strong>En las páginas consultadas no encontré una especificación completa del algoritmo con la que reproducir y verificar sus valores.</strong> Conocer el concepto y los nombres de los ejes no basta para deducir su fórmula exacta. Por eso no hemos calculado los JdK originales: implementamos una alternativa explícita basada en medias exponenciales. La segunda ronda del contraste encontró una aproximación SMA 10/30/9 que supera los criterios semanales y una confirmación nueva con NYSE Composite. Los resultados y límites están en «Qué he hecho»; no afirmamos conocer el código original JdK.</p>
               <h4>Qué hemos podido calcular con datos reales</h4>
               <p>Descargamos cinco años de cierres de Yahoo Finance para los índices y ETFs del catálogo. A partir del histórico de cada activo y su benchmark, calculamos series diarias y semanales propias de fuerza relativa y momentum. No copiamos puntos de StockCharts ni generamos trayectorias simuladas. La secuencia de cálculo es ésta:</p>
               <h4>1. Comparamos el activo con la referencia</h4>
@@ -67,24 +68,24 @@ async function boot() {
               <p><code>RS = precio del activo / precio del benchmark</code></p>
               <p>Si el activo lo hace mejor que la referencia, RS sube; si lo hace peor, baja. Puede mejorar aunque ambos caigan, si el activo cae menos.</p>
               <h4>2. Calculamos la posición horizontal: X</h4>
-              <p>Comparamos RS con su media móvil exponencial (EMA). Esta media da más peso a las observaciones recientes. Multiplicamos por 100 para situar la referencia en 100.</p>
-              <p><code>X = 100 × RS / EMA(RS, N)</code></p>
-              <p><strong>X &gt; 100:</strong> el cociente activo/benchmark está por encima de su media reciente. <strong>X &lt; 100:</strong> está por debajo. X=102 significa un 2 % sobre esa media; no significa que el activo haya superado al índice en un 2 % durante un plazo concreto.</p>
+              <p>La vista semanal de índices frente al S&P compara la media simple de RS de 10 semanas con la de 30. El resto de vistas usa RS frente a una media exponencial (EMA), que da más peso a las observaciones recientes. Multiplicamos por 100 para situar la referencia en 100.</p>
+              <p><code>Semanal de índices / S&P 500: X = 100 × SMA(RS, 10) / SMA(RS, 30). Resto: X = 100 × RS / EMA(RS, N)</code></p>
+              <p><strong>X &gt; 100:</strong> el cociente activo/benchmark está por encima de su media reciente. <strong>X &lt; 100:</strong> está por debajo. X=102 significa que el numerador de esa vista está un 2 % sobre su media de referencia; no significa que el activo haya superado al índice en un 2 % durante un plazo concreto.</p>
               <h4>3. Calculamos la posición vertical: Y</h4>
-              <p>Comparamos X con su propia media exponencial para representar su momentum relativo.</p>
-              <p><code>Y = 100 × X / EMA(X, M)</code></p>
+              <p>Comparamos X con su media simple de 9 semanas en la vista semanal de índices frente al S&P; en el resto se usa una media exponencial.</p>
+              <p><code>Semanal de índices / S&P 500: Y = 100 × X / SMA(X, 9). Resto: Y = 100 × X / EMA(X, M)</code></p>
               <p><strong>Y &gt; 100:</strong> X está por encima de su media reciente. <strong>Y &lt; 100:</strong> está por debajo. No es la rentabilidad del activo ni una derivada instantánea.</p>
               ${realExample}
-              <div class="kiko-example"><strong>Un ejemplo con números inventados, sólo para entenderlo</strong><p>Activo: 102 · benchmark: 5.000 → RS=0,0204.<br>Si EMA(RS)=0,0200 → X=102.<br>Si EMA(X)=101 → Y≈100,99.<br>El punto (102; 100,99) cae en <strong>Líder</strong>: ambos indicadores superan 100.</p></div>
+              <div class="kiko-example"><strong>Un ejemplo del método EMA con números inventados</strong><p>Activo: 102 · benchmark: 5.000 → RS=0,0204.<br>Si EMA(RS)=0,0200 → X=102.<br>Si EMA(X)=101 → Y≈100,99.<br>El punto (102; 100,99) cae en <strong>Líder</strong>: ambos indicadores superan 100.</p></div>
               <h4>4. Unimos los puntos para dibujar la cola</h4>
               <p>Cada sesión o semana produce un punto (X,Y). La cola conecta esos puntos en orden temporal y termina en la fecha explorada. Una cola de 17 periodos utiliza hasta 18 observaciones. Cambiar su longitud modifica el recorrido visible, no la fórmula ni el punto final.</p>
               <h4>¿Qué parámetros usamos?</h4>
-              <p><strong>Diario:</strong> N=50 sesiones y M=20 sesiones. <strong>Semanal:</strong> N=10 semanas y M=4 semanas. Son parámetros elegidos para esta implementación, no los oficiales de StockCharts. El semanal se calcula con su propia serie de cierres semanales; no es una muestra del indicador diario.</p>
+              <p><strong>Semanal de índices frente al S&P 500:</strong> SMA 10/30 para X y SMA 9 para Y. <strong>Diario:</strong> EMA N=50 sesiones y M=20. <strong>Resto del semanal:</strong> EMA N=10 semanas y M=4. Son parámetros elegidos para esta implementación, no los oficiales de StockCharts. El semanal se calcula con su propia serie de cierres semanales; no es una muestra del indicador diario.</p>
               <h4>¿Es exactamente el RRG de StockCharts?</h4>
-              <p><strong>La navegación toma esa web como referencia; el motor matemático es independiente.</strong> Lo comprobado es que nuestra implementación calcula la fórmula descrita con históricos reales. El contraste confirma discrepancias de coordenadas y cuadrantes incluso con cierres prácticamente coincidentes. Las variantes investigadas aún no superan los criterios de sustitución. El cálculo actual sigue siendo independiente de JdK.</p>
+              <p><strong>La navegación toma esa web como referencia; el motor matemático es independiente.</strong> Lo comprobado es que nuestra implementación calcula la fórmula descrita con históricos reales. El método SMA semanal de índices frente al S&P 500 reproduce muy de cerca la muestra comprobada. Diario, sectores y otros benchmarks conservan la alternativa EMA. La validación de una muestra no demuestra equivalencia universal con JdK.</p>
               <h4>¿De dónde salen los datos?</h4>
               <p>Yahoo Finance, con cinco años de históricos. ${esc(data.priceConvention)} Se cruzan sólo las fechas con datos en ambas series, sin inventar cierres. En semanal se usa la última sesión real de una semana completada, incluidos los festivos.</p>
-              <p>Las EMA sólo usan la fecha calculada y las anteriores. Se descartan cinco ventanas N de calentamiento. Las pruebas comprueban, entre otras cosas, que comparar un activo consigo mismo da (100,100), que cambiar la escala del precio no altera el resultado y que añadir datos futuros no modifica los valores anteriores sobre una misma serie de precios.</p>
+              <p>Ambos métodos sólo usan la fecha calculada y las anteriores. EMA descarta cinco ventanas N; SMA conserva el descarte inicial de 50 semanas para mantener las fechas disponibles. Las pruebas comprueban, entre otras cosas, que comparar un activo consigo mismo da (100,100), que cambiar la escala del precio no altera el resultado y que añadir datos futuros no modifica los valores anteriores sobre una misma serie de precios.</p>
             </section>
             <p>Los enlaces conservan la configuración y abren los datos más recientes; la fecha explorada no se guarda. Un cruce por 100 no constituye una señal de compra o venta.</p>
             <p>Fuente: <a href="${esc(data.sourceUrl)}" target="_blank" rel="noopener noreferrer">Yahoo Finance</a> mediante <a href="https://github.com/ranaroussi/yfinance" target="_blank" rel="noopener noreferrer">yfinance</a>. No constituye recomendación de inversión.</p>
@@ -96,6 +97,9 @@ async function boot() {
       <div class="identity"><div class="brand-mark">${icon('orbit')}</div><div><h1>Órbita<span> / rotación relativa</span></h1><p>Una perspectiva distinta del mercado.</p></div></div>
       <div class="header-actions"><span class="status-pill ${stale || refreshFailed ? 'warning' : ''}"><i></i>${stale ? 'Revisar antigüedad' : refreshFailed ? 'Última copia válida' : 'Cierres disponibles'}</span><button id="share" class="button primary">${icon('share')}<span>Copiar enlace</span></button></div>
     </header>
+    <nav class="page-tabs" role="tablist" aria-label="Secciones de Órbita"><button id="explorer-tab" role="tab" aria-selected="true" aria-controls="explorer-panel">Explorar mercado</button><button id="progress-tab" role="tab" aria-selected="false" aria-controls="progress-panel" tabindex="-1">Qué he hecho</button></nav>
+    ${progressMarkup}
+    <div id="explorer-panel" role="tabpanel" aria-labelledby="explorer-tab">
     ${methodologyMarkup}
     <div id="notice" class="notice" role="status" hidden></div>
     ${stale || refreshFailed || futureClock ? `<div class="notice">${stale ? 'Los históricos tienen más de cinco días naturales. ' : ''}${refreshFailed ? 'La última actualización falló; se conserva el conjunto válido anterior. ' : ''}${futureClock ? 'La fecha de tu dispositivo es anterior a la del dataset. ' : ''}Consulta las fechas antes de interpretar el gráfico.</div>` : ''}
@@ -129,6 +133,7 @@ async function boot() {
           <label class="timeline-accessible">Fecha del recorrido<input id="date-range" type="range" min="0" aria-label="Fecha del recorrido"></label>
           <div class="chart-toolbar"><div class="scale-buttons" role="group" aria-label="Escala del gráfico"><button data-scale="fit" title="Ajustar las trayectorias actuales">Ajustar</button><button data-scale="max" title="Encuadrar todo el histórico">Histórico</button><button data-scale="center" title="Centrar en 100,100">Centrar</button></div><label class="checkbox small"><input id="scale-lock" type="checkbox" checked> Fijar ajuste</label><label class="checkbox small push-right"><input id="arrows" type="checkbox"> Flechas</label><button id="zoom-reset" class="icon-button" title="Restablecer zoom" aria-label="Restablecer zoom">${icon('reset')}</button></div>
           <div class="rotation-wrap"><div id="rotation-chart" class="rotation-chart" role="img" aria-label="Rotación de activos en cuatro cuadrantes; valores disponibles también en la tabla"></div><div id="empty-chart" class="empty-chart" hidden>Selecciona algún activo para explorar su rotación.</div></div>
+          <p id="method-caption" class="method-caption"></p>
           <div class="chart-caption"><span>Arrastra para desplazar · rueda o pellizca para acercar</span><span id="period-caption"></span></div>
         </section>
         <section class="table-card"><div class="table-heading"><div><h2>Una mirada a los activos</h2><p>Selecciona una fila para seguir su trayectoria.</p></div><button id="table-toggle" class="text-button" aria-expanded="true">Ocultar tabla</button></div><div id="table-content" class="table-scroll"><table><thead><tr>
@@ -138,6 +143,7 @@ async function boot() {
 
       </section>
     </main>
+    </div>
     <footer class="page-footer"><span>${icon('orbit')} Órbita <span class="muted">· una vista relativa</span></span><div><span>Última sesión de mercado: <b>${formatDate(data.latestSession)}</b></span><span>Actualización: <b>${new Date(data.generatedAt).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'short', timeStyle: 'short' })} · Madrid</b></span><span>Yahoo Finance · USD</span></div></footer>
     <div id="toast" class="toast" role="status" hidden></div>`;
 
@@ -210,6 +216,7 @@ async function boot() {
     el<HTMLButtonElement>('back').disabled = end === 0;
     el<HTMLButtonElement>('forward').disabled = end === series.length - 1;
     el('latest').classList.toggle('at-latest', end === series.length - 1);
+    el('method-caption').textContent = view().method === 'relative-sma-10-30-9-v2' ? 'Aproximación semanal validada · SMA 10/30/9 · consulta «Qué he hecho»' : 'Fórmula EMA independiente · no calibrada con StockCharts';
     el('period-caption').textContent = `${state.tail} ${state.tf === 'weekly' ? 'semanas' : 'sesiones'} · centro 100 / 100`;
     el('empty-chart').hidden = assets.some(a => a.points.length > 0);
     renderTable();
@@ -370,11 +377,29 @@ async function boot() {
   el('share').addEventListener('click', () => copyLink(false));
   el('share-date').addEventListener('click', () => copyLink(true));
   addEventListener('popstate', () => { state = parseState(location.search, data); configurationChanged(state.date); });
+  function selectPage(report: boolean, updateHash = true) {
+    stop();
+    el('explorer-panel').hidden = report; el('progress-panel').hidden = !report;
+    for (const [id, selected] of [['explorer-tab', !report], ['progress-tab', report]] as const) {
+      el(id).setAttribute('aria-selected', String(selected)); el(id).tabIndex = selected ? 0 : -1;
+    }
+    if (updateHash) history.replaceState(null, '', `${location.pathname}${location.search}${report ? '#que-he-hecho' : ''}`);
+    if (!report) requestAnimationFrame(() => { rotation.resize(); benchmarkChart.resize(); render(true); });
+  }
+  el('explorer-tab').addEventListener('click', () => selectPage(false));
+  el('progress-tab').addEventListener('click', () => selectPage(true));
+  el('explorer-tab').parentElement!.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault(); const report = event.key === 'End' || (event.key !== 'Home' && el('progress-tab').getAttribute('aria-selected') !== 'true');
+    selectPage(report); el(report ? 'progress-tab' : 'explorer-tab').focus();
+  });
+  addEventListener('hashchange', () => selectPage(location.hash === '#que-he-hecho', false));
   const observer = new ResizeObserver(() => { clearTimeout(emptyTimer); emptyTimer = setTimeout(() => { rotation.resize(); benchmarkChart.resize(); if (lock) render(true); }, 60); });
   observer.observe(el('rotation-chart')); observer.observe(el('benchmark-chart'));
   if (matchMedia('(max-width: 760px)').matches) el<HTMLDetailsElement>('settings').open = false;
   if (Object.keys(data.errors).length) { el('notice').textContent = `Instrumentos no disponibles: ${Object.keys(data.errors).join(', ')}. El resto del catálogo funciona.`; el('notice').hidden = false; }
   configurationChanged(state.date);
+  if (location.hash === '#que-he-hecho') selectPage(true, false);
   if (location.hash === '#para-kiko') {
     el<HTMLDetailsElement>('methodology').open = true;
     requestAnimationFrame(() => el('para-kiko').scrollIntoView({ block: 'start' }));

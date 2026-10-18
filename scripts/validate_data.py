@@ -10,7 +10,7 @@ from scripts.market import ROOT
 
 def validate(path: Path, max_age_days: int = 14) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
-    assert data["version"] == 1 and data["method"] == "relative-ema-v1", "Esquema incompatible"
+    assert data["version"] == 1 and data["method"] in ("relative-ema-v1", "relative-models-v2"), "Esquema incompatible"
     generated = datetime.fromisoformat(data["generatedAt"])
     assert 0 <= (datetime.now(timezone.utc) - generated).total_seconds() <= max_age_days * 86400, "Dataset fuera del límite de antigüedad"
     assert (datetime.now(timezone.utc).date() - datetime.fromisoformat(data["latestSession"]).date()).days <= max_age_days, "Sesiones demasiado antiguas"
@@ -20,9 +20,12 @@ def validate(path: Path, max_age_days: int = 14) -> dict:
         for benchmark in group["benchmarks"]:
             for timeframe, expected in [("daily", data["latestSession"]), ("weekly", data["expectedWeeklySession"])]:
                 view = data["views"][benchmark][timeframe]
-                assert view.get("method", data["method"]) == "relative-ema-v1", "Método de vista incompatible"
-                assert view.get("calculationVersion", 1) == 1, "Versión de cálculo incompatible"
-                assert view["parameters"] == (dict(n=50, m=20) if timeframe == "daily" else dict(n=10, m=4)), "Parámetros incompatibles"
+                method = view.get("method", data["method"])
+                sma = method == "relative-sma-10-30-9-v2"
+                assert method == "relative-ema-v1" or (sma and benchmark == "GSPC" and timeframe == "weekly"), "Método de vista incompatible"
+                assert view.get("calculationVersion", 1) == (2 if sma else 1), "Versión de cálculo incompatible"
+                expected_parameters = dict(short=10, long=30, m=9) if sma else (dict(n=50, m=20) if timeframe == "daily" else dict(n=10, m=4))
+                assert view["parameters"] == expected_parameters, "Parámetros incompatibles"
                 reference = view["benchmark"]
                 assert len(reference) >= 31 and reference[-1][0] == expected, "Benchmark incompleto"
                 assert set(group["defaults"]) <= set(view["assets"]), "Faltan activos iniciales"
