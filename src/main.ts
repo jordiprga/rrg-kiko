@@ -98,10 +98,10 @@ async function boot() {
       <div class="header-actions"><span class="status-pill ${stale || refreshFailed ? 'warning' : ''}"><i></i>${stale ? 'Revisar antigüedad' : refreshFailed ? 'Última copia válida' : 'Cierres disponibles'}</span><button id="share" class="button primary">${icon('share')}<span>Copiar enlace</span></button></div>
     </header>
     <nav class="page-tabs" role="tablist" aria-label="Secciones de Órbita"><button id="explorer-tab" role="tab" aria-selected="true" aria-controls="explorer-panel">Explorar mercado</button><button id="progress-tab" role="tab" aria-selected="false" aria-controls="progress-panel" tabindex="-1">Qué he hecho</button></nav>
+    <div id="notice" class="notice" role="status" hidden></div>
     ${progressMarkup}
     <div id="explorer-panel" role="tabpanel" aria-labelledby="explorer-tab">
     ${methodologyMarkup}
-    <div id="notice" class="notice" role="status" hidden></div>
     ${stale || refreshFailed || futureClock ? `<div class="notice">${stale ? 'Los históricos tienen más de cinco días naturales. ' : ''}${refreshFailed ? 'La última actualización falló; se conserva el conjunto válido anterior. ' : ''}${futureClock ? 'La fecha de tu dispositivo es anterior a la del dataset. ' : ''}Consulta las fechas antes de interpretar el gráfico.</div>` : ''}
     <main class="workspace">
       <aside class="sidebar">

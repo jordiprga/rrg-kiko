@@ -93,6 +93,15 @@ def run():
         result['maxAbsError'] = np.max(abs(new.loc[dates, ['x', 'y']].to_numpy() - target), axis=0).tolist()
         close = ref['close'] if identity == 'NYA' else ref[identity.lower() + '_close']
         result['priceMaxError'] = float(abs(prices[identity].loc[ref.index] - close).max())
+        if identity == 'NYA':
+            # Data diagnostic only. Replace the entire observed price window in both
+            # inputs, not a selected erroneous date. Formula/parameters remain fixed.
+            matched_asset, matched_benchmark = prices[identity].copy(), prices['GSPC'].copy()
+            matched_asset.loc[ref.index] = ref.close
+            matched_benchmark.loc[ref.index] = ref.benchmark_close
+            matched = sma_indicators(matched_asset, matched_benchmark).loc[ref.index, ['x', 'y']].to_numpy()
+            result['matchedClosesDiagnostic'] = metrics(matched, target, .01)
+            result['matchedClosesDiagnostic']['maxAbsError'] = np.max(abs(matched - target), axis=0).tolist()
         result['fresh'] = identity == 'NYA'
         result['passes'] = all(v <= .20 for v in result['rmse']) and all(v >= .5 for v in result['rmseReduction']) and result['quadrantAccuracy'] >= .95
         report['evaluations'][identity] = result

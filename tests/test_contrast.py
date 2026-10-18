@@ -73,6 +73,19 @@ def test_sma_is_causal_scale_invariant_and_benchmark_neutral():
     pd.testing.assert_frame_equal(full.iloc[:-15], sma_indicators(prices.IXIC.iloc[:-15], prices.GSPC.iloc[:-15]))
     missing = sma_indicators(prices.IXIC.drop(prices.index[-2]), prices.GSPC)
     assert prices.index[-2] not in missing.index and not missing.isna().any().any()
+    shorter = sma_indicators(prices.IXIC.iloc[20:], prices.GSPC.iloc[20:])
+    np.testing.assert_allclose(full.loc[shorter.index], shorter, atol=1e-10)
+
+
+def test_nya_residual_is_explained_by_matching_observed_closes():
+    prices = weekly_fixture()
+    ref = pd.read_csv(RESEARCH / 'confirmation-nya.csv', index_col=0, parse_dates=True).sort_index()
+    # Replace all observed input closes, not a date-specific formula correction.
+    asset, benchmark = prices.NYA.copy(), prices.GSPC.copy()
+    asset.loc[ref.index] = ref.close
+    benchmark.loc[ref.index] = ref.benchmark_close
+    result = sma_indicators(asset, benchmark).loc[ref.index, ['x', 'y']].to_numpy()
+    assert np.max(abs(result - ref[['x', 'y']].to_numpy())) < .0051
 
 
 def test_sma_promotion_is_limited_to_weekly_gspc():

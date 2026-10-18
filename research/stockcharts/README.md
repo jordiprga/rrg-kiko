@@ -43,3 +43,7 @@ Las pruebas de integración usan tests/fixtures/weekly-prices.csv (110 semanas d
 La promoción afecta únicamente a índices semanales frente a GSPC. El identificador propio es relative-sma-10-30-9-v2. Es una inferencia muy fiel en esta muestra, no una especificación demostrada del código original JdK.
 
 La evaluación de cuadrantes utiliza tolerancia numérica de 1e-9 en los límites de incertidumbre: un valor de referencia 100,01 con ±0,01 toca el eje y se excluye. Esta corrección cambia el porcentaje de la primera candidata Nasdaq de 62,5 % a 66,7 % al excluir ese punto; no cambia las decisiones ni los RMSE.
+
+## Diagnóstico adicional de datos
+
+La diferencia NYSE de 33,21 puntos corresponde al 30/01/2026. Al recalcular la misma SMA 10/30/9 con todos los cierres observados de StockCharts en ambos inputs, RMSE X/Y baja a 0,003069/0,003014 y el máximo por eje queda por debajo de 0,005. La fórmula no cambia y no se aplican ajustes por fecha; el cálculo público sigue usando Yahoo. El informe separa esta prueba de datos de la confirmación principal con precios Yahoo. La búsqueda de la ronda2 evaluó 10.476 estructuras X y 1.144 alternativas Y sobre el desarrollo Nasdaq.
