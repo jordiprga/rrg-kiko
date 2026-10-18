@@ -71,17 +71,20 @@ export function rotationOptions(assets: PlotAsset[], bounds: number[], arrows: b
   };
 }
 
-export function benchmarkOptions(series: [string, number][], end: number, tail: number, name: string): EChartsCoreOption {
+export function benchmarkOptions(series: [string, number][], end: number, tail: number, name: string, visible: [number, number]): EChartsCoreOption {
   const start = Math.max(0, end - tail);
   return {
     animation: false, grid: { left: 7, right: 7, top: 12, bottom: 42 },
-    tooltip: { trigger: 'axis', confine: true, formatter: (p: any) => `${escape(name)} · ${escape(p[0].axisValue)}<br>${Number(p[0].value).toLocaleString('es-ES', { maximumFractionDigits: 2 })}` },
-    xAxis: [0, 1].map(() => ({ type: 'category', data: series.map(p => p[0]), boundaryGap: false, show: false })),
-    yAxis: { type: 'value', scale: true, show: false },
-    series: [{ type: 'line', data: series.map(p => p[1]), showSymbol: false, lineStyle: { color: '#8faaa0', width: 1.5 },
+    tooltip: { trigger: 'axis', confine: true, formatter: (p: any) => `${escape(name)} · ${escape(series[Math.round(p[0].value[0])]?.[0] ?? '')}<br>${Number(p[0].value[1]).toLocaleString('es-ES', { maximumFractionDigits: 2 })}` },
+    xAxis: [{ type: 'value', min: visible[0], max: visible[1], show: false },
+      { type: 'category', data: series.map(p => p[0]), boundaryGap: false, show: false }],
+    yAxis: { type: 'value', scale: true, show: false,
+      min: Math.min(...series.slice(visible[0], visible[1] + 1).map(p => p[1])) * 0.995,
+      max: Math.max(...series.slice(visible[0], visible[1] + 1).map(p => p[1])) * 1.005 },
+    series: [{ type: 'line', data: series.map((p, i) => [i, p[1]]), showSymbol: false, lineStyle: { color: '#8faaa0', width: 1.5 },
       areaStyle: { color: '#e5ece5', opacity: 0.35 },
-      markArea: { silent: true, itemStyle: { color: '#456f5924' }, data: [[{ xAxis: series[start][0] }, { xAxis: series[end][0] }]] },
-      markLine: { silent: true, symbol: 'none', label: { show: false }, lineStyle: { color: '#476e59', type: 'solid', width: 1 }, data: [{ xAxis: series[end][0] }] },
+      markArea: { silent: true, itemStyle: { color: '#456f5924' }, data: [[{ xAxis: start }, { xAxis: end }]] },
+      markLine: { silent: true, symbol: 'none', label: { show: false }, lineStyle: { color: '#476e59', type: 'solid', width: 1 }, data: [{ xAxis: start }, { xAxis: end }] },
     }],
     dataZoom: [{ id: 'history', type: 'slider', xAxisIndex: 1, filterMode: 'none', bottom: 6, height: 20, brushSelect: false,
       zoomLock: true, handleSize: 0, moveHandleSize: 8, showDetail: false, showDataShadow: false, borderColor: '#dfe5db',

@@ -32,11 +32,11 @@ pnpm preview
 
 - Inicio: cuatro índices frente al S&P 500, semanal, 17 periodos. El conjunto de sectores abre seis ETFs frente a SPY.
 - Cambiar diario/semanal mantiene la selección. Desde una fecha histórica se escoge el último periodo cerrado que no la supere.
-- Arrastrar la ventana bajo el benchmark o usar el selector de fecha. Los botones y las flechas izquierda/derecha recorren periodos; «Reproducir» anima y «Última sesión» vuelve al presente. La reproducción se pausa al ocultar la pestaña.
+- Arrastrar directamente la zona sombreada sobre el benchmark o la barra inferior; también se puede escribir una fecha. Si no es un periodo cerrado, se indica la fecha efectiva anterior disponible. El rango visual de un año (inicial) o todo el histórico no modifica los cálculos. Los botones y las flechas izquierda/derecha recorren periodos; «Reproducir» anima y «Última sesión» vuelve al presente. La reproducción se pausa al ocultar la pestaña.
 - «Ajustar» encuadra las colas actuales; «Histórico» encuadra todo el histórico de los activos visibles; «Centrar» sitúa (100,100) en el centro. «Fijar ajuste» recalcula el modo elegido con cada cambio; desmarcarlo conserva la escala. Ratón/pellizco para zoom; arrastrar para desplazar.
 - Marcar/desmarcar en el panel añade o quita instrumentos. Las casillas de la tabla sólo controlan visibilidad. Pulsar el nombre de una fila resalta su trayectoria; repetir quita el resaltado.
 - «Copiar enlace» guarda universo, referencia, activos, periodicidad, cola, flechas y activos ocultos en la URL. Incluye alternativa manual si el navegador deniega el portapapeles. No depende de almacenamiento local.
-- El enlace siempre carga el último periodo disponible del dataset, no la fecha histórica explorada.
+- «Copiar enlace» carga el último periodo disponible. «Copiar esta fecha» añade `date=AAAA-MM-DD` y restaura fecha y configuración. La fecha efectiva se ajusta al periodo cerrado anterior; un enlace histórico fija la fecha, no la versión de los precios revisables del proveedor.
 - La cola mide intervalos: 17 periodos necesitan hasta 18 observaciones. En el inicio del histórico se dibujan sólo las observaciones disponibles.
 
 ## Catálogo y precios
@@ -76,3 +76,9 @@ Actions puede retrasarse y GitHub puede desactivar crons de repositorios públic
 Datos de [Yahoo Finance](https://finance.yahoo.com/) mediante [yfinance](https://github.com/ranaroussi/yfinance), sujetos a las condiciones del proveedor. Indicadores independientes; no constituye recomendación de inversión.
 
 La aplicación utiliza TypeScript, Vite y ECharts; Python prepara los históricos. Se aloja en GitHub Pages y se actualiza mediante GitHub Actions.
+
+## Contraste StockCharts · 18/10/2026
+
+Se han recogido 52 semanas de Nasdaq Composite y Dow Jones frente al S&P 500. Se conserva una copia local identificada de precios, código y dataset para comparar sobre la misma muestra. Tras reservar el último 30 % del Nasdaq y todo Dow, se probaron 5.160 variantes EMA. La mejor reduce el RMSE más del 60 %, pero sigue entre 0,39 y 0,81 puntos por eje y no alcanza el 95 % de cuadrantes. **No se sustituye el cálculo actual.** Los dos casos de Kiko sí encajan en cuadrante y último sentido con la candidata, lo que por sí solo no basta para promoverla.
+
+[Protocolo, referencias y diagnóstico](research/stockcharts/README.md). El banco se ejecuta con `python -m scripts.contrast`; produce un informe y gráficos locales, sin modificar la web. Las vistas identifican método, versión y parámetros; los validadores aceptan también snapshots anteriores sin esos metadatos de vista.

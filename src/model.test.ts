@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseState, serialize, defaults, trail, indexAtOrBefore, quadrant, scaleBounds, type Dataset, type Point } from './model';
+import { parseState, serialize, defaults, trail, indexAtOrBefore, quadrant, scaleBounds, validDate, visibleWindow, draggedEnd, type Dataset, type Point } from './model';
 
 const data = {
   catalog: ['GSPC', 'NDX', 'IXIC', 'DJI', 'RUT'].map(id => ({ id, group: 'indices' })),
@@ -29,6 +29,29 @@ describe('Shared configuration', () => {
 });
 
 describe('Historical navigation', () => {
+  it('only serializes the historical date when explicitly requested', () => {
+    const state = { ...defaults(data, 'indices'), date: '2026-01-02' };
+    expect(parseState(serialize(state), data).date).toBeUndefined();
+    expect(parseState(serialize(state, state.date), data)).toEqual(state);
+  });
+  it('rejects invalid dates without crashing', () => {
+    for (const date of ['2026-99-99', '2026-02-30', 'xxx', '2026-2-3']) {
+      expect(validDate(date)).toBe(false);
+      expect(parseState('?date=' + date, data).date).toBeUndefined();
+    }
+  });
+  it('maps a drag to periods, with both historical limits clamped', () => {
+    expect(draggedEnd(60, -100, 1000, 20, 72, 100)).toBe(55);
+    expect(draggedEnd(60, -10000, 1000, 20, 72, 100)).toBe(0);
+    expect(draggedEnd(60, 10000, 1000, 20, 72, 100)).toBe(99);
+  });
+  it('changes only the visible range without mutating complete history', () => {
+    const series: [string, number][] = [['2024-01-05', 1], ['2025-01-03', 2], ['2025-06-06', 3], ['2026-01-02', 4]];
+    expect(visibleWindow(series, 3, false)).toEqual([0, 3]);
+    expect(visibleWindow(series, 2, true)).toEqual([0, 3]);
+    expect(series).toHaveLength(4);
+    expect(indexAtOrBefore(series, '2025-06-07')).toBe(2);
+  });
   it('never advances to a future observation across a missing session', () => expect(indexAtOrBefore(points, '2026-10-15')).toBe(2));
   it('does not use future points before the first date', () => expect(trail(points, '2026-01-01', 30)).toEqual([]));
   it('represents n intervals with n+1 available points and does not use future data', () => expect(trail(points, '2026-10-14', 1)).toEqual(points.slice(1, 3)));

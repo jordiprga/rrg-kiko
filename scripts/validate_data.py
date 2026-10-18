@@ -20,6 +20,9 @@ def validate(path: Path, max_age_days: int = 14) -> dict:
         for benchmark in group["benchmarks"]:
             for timeframe, expected in [("daily", data["latestSession"]), ("weekly", data["expectedWeeklySession"])]:
                 view = data["views"][benchmark][timeframe]
+                assert view.get("method", data["method"]) == "relative-ema-v1", "Método de vista incompatible"
+                assert view.get("calculationVersion", 1) == 1, "Versión de cálculo incompatible"
+                assert view["parameters"] == (dict(n=50, m=20) if timeframe == "daily" else dict(n=10, m=4)), "Parámetros incompatibles"
                 reference = view["benchmark"]
                 assert len(reference) >= 31 and reference[-1][0] == expected, "Benchmark incompleto"
                 assert set(group["defaults"]) <= set(view["assets"]), "Faltan activos iniciales"

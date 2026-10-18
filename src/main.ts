@@ -1,7 +1,7 @@
 import './style.css';
 import { initChart, rotationOptions, benchmarkOptions, palette, type PlotAsset } from './charts';
 import { defaults, parseState, serialize, trail, indexAtOrBefore, scaleBounds, quadrant, quadrants,
-  validateDataset, type Dataset, type State, type Group, type Timeframe, type Point } from './model';
+  validateDataset, visibleWindow, draggedEnd, type Dataset, type State, type Group, type Timeframe, type Point } from './model';
 
 const root = document.querySelector<HTMLDivElement>('#app')!;
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -31,6 +31,7 @@ async function boot() {
   let state: State = parseState(location.search, data);
   let end = 0, highlighted: string | null = null, playing = false, timer: ReturnType<typeof setInterval> | undefined;
   let scaleMode: 'fit' | 'max' | 'center' = 'center', lock = true, bounds: number[] | undefined;
+  let visibleRange: 'year' | 'all' = 'year', visibleAnchor = 0;
   let sortKey = 'name', ascending = true;
   const catalog = new Map(data.catalog.map(i => [i.id, i]));
   const color = (id: string) => palette[data.catalog.findIndex(i => i.id === id) % palette.length];
@@ -58,7 +59,7 @@ async function boot() {
               <p>La vista gratuita está limitada a un conjunto semanal fijo. Las opciones de configuración para miembros las estudié en su documentación; no accedí a una cuenta de pago. Esa revisión sirvió para reconstruir la interacción y añadir lo que pediste: diario/semanal, selección de activos y enlace permanente.</p>
               <h4>Qué averigüé sobre el cálculo original</h4>
               <p>Revisé también la <a href="https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/rrg-relative-strength" target="_blank" rel="noopener noreferrer">documentación de sus indicadores</a>. StockCharts usa <strong>JdK RS-Ratio</strong> en horizontal, para representar la tendencia de fuerza relativa, y <strong>JdK RS-Momentum</strong> en vertical, para el momentum del primer indicador. Ambos están normalizados alrededor de 100.</p>
-              <p><strong>En las páginas consultadas no encontré una especificación completa del algoritmo con la que reproducir y verificar sus valores.</strong> Conocer el concepto y los nombres de los ejes no basta para deducir su fórmula exacta. Por eso no hemos calculado los JdK originales: implementamos una alternativa explícita basada en medias exponenciales. Tampoco hemos validado equivalencia numérica comparando sus coordenadas con las nuestras.</p>
+              <p><strong>En las páginas consultadas no encontré una especificación completa del algoritmo con la que reproducir y verificar sus valores.</strong> Conocer el concepto y los nombres de los ejes no basta para deducir su fórmula exacta. Por eso no hemos calculado los JdK originales: implementamos una alternativa explícita basada en medias exponenciales. El contraste semanal del 18/10/2026 usa 52 fechas de Nasdaq Composite y Dow Jones. La mejor variante EMA de la búsqueda reduce el error, pero no alcanza RMSE ≤0,20 por eje ni 95 % de cuadrantes en evaluación independiente. Por eso conservamos este cálculo; no afirmamos equivalencia con JdK.</p>
               <h4>Qué hemos podido calcular con datos reales</h4>
               <p>Descargamos cinco años de cierres de Yahoo Finance para los índices y ETFs del catálogo. A partir del histórico de cada activo y su benchmark, calculamos series diarias y semanales propias de fuerza relativa y momentum. No copiamos puntos de StockCharts ni generamos trayectorias simuladas. La secuencia de cálculo es ésta:</p>
               <h4>1. Comparamos el activo con la referencia</h4>
@@ -80,7 +81,7 @@ async function boot() {
               <h4>¿Qué parámetros usamos?</h4>
               <p><strong>Diario:</strong> N=50 sesiones y M=20 sesiones. <strong>Semanal:</strong> N=10 semanas y M=4 semanas. Son parámetros elegidos para esta implementación, no los oficiales de StockCharts. El semanal se calcula con su propia serie de cierres semanales; no es una muestra del indicador diario.</p>
               <h4>¿Es exactamente el RRG de StockCharts?</h4>
-              <p><strong>La navegación toma esa web como referencia; el motor matemático es independiente.</strong> Lo comprobado es que nuestra implementación calcula la fórmula descrita con históricos reales. No se ha demostrado que coloque cada activo en el mismo punto o cuadrante que StockCharts. También pueden influir las diferencias de proveedor, ajustes y fecha de cierre.</p>
+              <p><strong>La navegación toma esa web como referencia; el motor matemático es independiente.</strong> Lo comprobado es que nuestra implementación calcula la fórmula descrita con históricos reales. El contraste confirma discrepancias de coordenadas y cuadrantes incluso con cierres prácticamente coincidentes. Las variantes investigadas aún no superan los criterios de sustitución. El cálculo actual sigue siendo independiente de JdK.</p>
               <h4>¿De dónde salen los datos?</h4>
               <p>Yahoo Finance, con cinco años de históricos. ${esc(data.priceConvention)} Se cruzan sólo las fechas con datos en ambas series, sin inventar cierres. En semanal se usa la última sesión real de una semana completada, incluidos los festivos.</p>
               <p>Las EMA sólo usan la fecha calculada y las anteriores. Se descartan cinco ventanas N de calentamiento. Las pruebas comprueban, entre otras cosas, que comparar un activo consigo mismo da (100,100), que cambiar la escala del precio no altera el resultado y que añadir datos futuros no modifica los valores anteriores sobre una misma serie de precios.</p>
@@ -118,6 +119,8 @@ async function boot() {
         <section class="chart-card">
           <div class="card-heading"><div><div class="eyebrow" id="view-eyebrow"></div><h2>El mercado, en movimiento</h2></div><div class="date-block"><span>FECHA EXPLORADA</span><strong id="explored-date"></strong></div></div>
           <div class="benchmark-heading"><span id="benchmark-heading"></span><span id="benchmark-price"></span></div>
+          <div class="temporal-tools"><label>Rango visible <select id="visible-range"><option value="year">Un año</option><option value="all">Histórico completo</option></select></label><label>Ir a fecha <input id="jump-date" type="date"></label><button id="share-date" class="text-button">Copiar esta fecha</button></div>
+          <div id="interval-dates" class="interval-dates"></div>
           <div id="benchmark-chart" class="benchmark-chart" role="img" aria-label="Histórico del benchmark con ventana temporal arrastrable"></div>
           <div class="playback">
             <div class="transport"><button id="back" class="icon-button" title="Periodo anterior" aria-label="Periodo anterior">${icon('left')}</button><button id="play" class="play-button" aria-label="Reproducir histórico">${icon('play')}<span>Reproducir</span></button><button id="forward" class="icon-button" title="Periodo siguiente" aria-label="Periodo siguiente">${icon('right')}</button><button id="latest" class="text-button">Última sesión</button></div>
@@ -144,7 +147,7 @@ async function boot() {
   const benchmarkChart = initChart(el('benchmark-chart'));
   const toast = (message: string) => { el('toast').textContent = message; el('toast').hidden = false; setTimeout(() => el('toast').hidden = true, 3000); };
   let emptyTimer: ReturnType<typeof setTimeout> | undefined;
-  const writeUrl = () => history.replaceState(null, '', `${location.pathname}?${serialize(state)}${location.hash}`);
+  const writeUrl = () => history.replaceState(null, '', `${location.pathname}?${serialize(state, state.date)}${location.hash}`);
 
   function stop() {
     clearInterval(timer); timer = undefined; playing = false;
@@ -154,6 +157,9 @@ async function boot() {
   function setEnd(index: number) {
     const max = view().benchmark.length - 1;
     end = Math.max(0, Math.min(max, index));
+    if (state.date) state.date = currentDate();
+    const [left, right] = visibleWindow(view().benchmark, visibleAnchor, visibleRange === 'all');
+    if (end < left || end > right) visibleAnchor = Math.min(max, end + (state.tf === 'weekly' ? 13 : 63));
     render();
     if (end === max && playing) stop();
   }
@@ -193,8 +199,10 @@ async function boot() {
     const series = view().benchmark, date = currentDate(), assets = assetsAtDate();
     if (!bounds || lock || reset) bounds = computeBounds(assets);
     rotation.setOption(rotationOptions(assets, bounds, state.arrows, instrument(state.benchmark).ticker, reset || lock), { replaceMerge: ['series'] });
-    benchmarkChart.setOption(benchmarkOptions(series, end, state.tail, instrument(state.benchmark).ticker), true);
+    benchmarkChart.setOption(benchmarkOptions(series, end, state.tail, instrument(state.benchmark).ticker, visibleWindow(series, visibleAnchor, visibleRange === 'all')));
     el('explored-date').textContent = formatDate(date);
+    el('interval-dates').textContent = `${formatDate(series[Math.max(0, end - state.tail)][0])} → ${formatDate(date)} · ${Math.min(end, state.tail)} intervalos / hasta ${Math.min(end, state.tail) + 1} puntos · arrastra la zona sombreada`;
+    input('jump-date').min = series[0][0]; input('jump-date').max = series.at(-1)![0]; input('jump-date').value = date;
     el('view-eyebrow').textContent = `${data.groups[state.group]!.name} / ${state.tf === 'weekly' ? 'SEMANAL' : 'DIARIO'} / FRENTE A ${instrument(state.benchmark).ticker}`;
     el('benchmark-heading').textContent = `${instrument(state.benchmark).name} · ${instrument(state.benchmark).ticker}${instrument(state.benchmark).proxyOf ? ' · ETF proxy' : ''}`;
     el('benchmark-price').textContent = `${fmt(series[end][1])} ${instrument(state.benchmark).type === 'index' ? 'ptos.' : 'USD ajustados'}`;
@@ -228,6 +236,8 @@ async function boot() {
   function configurationChanged(date?: string) {
     stop(); highlighted = null; bounds = undefined;
     end = date ? Math.max(0, indexAtOrBefore(view().benchmark, date)) : view().benchmark.length - 1;
+    visibleAnchor = Math.min(view().benchmark.length - 1, end + (state.tf === 'weekly' ? 13 : 63));
+    if (state.date) state.date = currentDate();
     rebuildControls(); render(true);
   }
 
@@ -256,7 +266,7 @@ async function boot() {
   el('all').addEventListener('click', () => { state.selected = data.catalog.filter(i => i.group === state.group && i.id !== state.benchmark && view().assets[i.id]).map(i => i.id); state.hidden = []; buildAssets(); render(true); });
   el('none').addEventListener('click', () => { state.selected = []; state.hidden = []; highlighted = null; buildAssets(); render(true); });
   el('preset').addEventListener('click', () => { state.selected = [...data.groups[state.group]!.defaults]; state.hidden = []; highlighted = null; buildAssets(); render(true); });
-  const setTail = (value: string) => { const number = Number(value); if (!Number.isFinite(number)) return; state.tail = Math.max(1, Math.min(30, Math.round(number))); input('tail-range').value = input('tail-number').value = String(state.tail); render(true); };
+  const setTail = (value: string) => { stop(); const number = Number(value); if (!Number.isFinite(number)) return; state.tail = Math.max(1, Math.min(30, Math.round(number))); input('tail-range').value = input('tail-number').value = String(state.tail); render(true); };
   input('tail-range').addEventListener('input', () => setTail(input('tail-range').value));
   input('tail-number').addEventListener('input', () => { if (input('tail-number').value) setTail(input('tail-number').value); });
   input('tail-number').addEventListener('change', () => setTail(input('tail-number').value));
@@ -282,12 +292,45 @@ async function boot() {
   benchmarkChart.on('datazoom', (event: any) => {
     const zoom = event.batch?.[0] ?? event; if (typeof zoom.end !== 'number') return;
     stop(); const target = Math.round(zoom.end / 100 * (view().benchmark.length - 1));
-    if (target !== end) setEnd(target);
+    if (target !== end) setEnd(Math.max(Math.min(state.tail, view().benchmark.length - 1), target));
   });
-  benchmarkChart.getZr().on('click', (event: any) => {
-    if (event.offsetY > benchmarkChart.getHeight() - 40) return;
-    const pixel = benchmarkChart.convertFromPixel({ xAxisIndex: 0 }, event.offsetX);
-    if (Number.isFinite(pixel)) { stop(); setEnd(Math.round(Number(pixel))); }
+  // Capture the pointer so release never triggers a second click navigation.
+  const host = el('benchmark-chart');
+  let drag: { pointer: number; x: number; end: number; left: number; right: number; width: number } | undefined;
+  host.addEventListener('pointerdown', event => {
+    if (event.button !== 0) return;
+    const box = host.getBoundingClientRect(), x = event.clientX - box.left, y = event.clientY - box.top;
+    if (y > benchmarkChart.getHeight() - 42) return;
+    stop();
+    const [left, right] = visibleWindow(view().benchmark, visibleAnchor, visibleRange === 'all');
+    const pixel = (i: number) => Number(benchmarkChart.convertToPixel({ xAxisIndex: 0 }, i));
+    const inWindow = x >= pixel(Math.max(0, end - state.tail)) - 4 && x <= pixel(end) + 4;
+    if (!inWindow) {
+      const index = Number(benchmarkChart.convertFromPixel({ xAxisIndex: 0 }, x));
+      if (Number.isFinite(index)) setEnd(Math.round(index));
+      return;
+    }
+    event.preventDefault(); host.setPointerCapture(event.pointerId);
+    drag = { pointer: event.pointerId, x: event.clientX, end, left, right, width: host.clientWidth - 14 };
+    host.classList.add('dragging');
+  });
+  host.addEventListener('pointermove', event => {
+    if (!drag || drag.pointer !== event.pointerId) return;
+    const target = draggedEnd(drag.end, event.clientX - drag.x, drag.width, drag.left, drag.right, view().benchmark.length);
+    if (target !== end) setEnd(Math.max(Math.min(state.tail, view().benchmark.length - 1), target));
+  });
+  const finishDrag = () => { drag = undefined; host.classList.remove('dragging'); };
+  host.addEventListener('pointerup', finishDrag);
+  host.addEventListener('pointercancel', finishDrag);
+  host.addEventListener('lostpointercapture', finishDrag);
+  input('jump-date').addEventListener('change', () => {
+    const date = input('jump-date').value; if (!date) return;
+    stop(); setEnd(Math.max(0, indexAtOrBefore(view().benchmark, date)));
+    if (date !== currentDate()) toast(`Fecha efectiva: ${formatDate(currentDate())} · periodo cerrado disponible`);
+  });
+  el('visible-range').addEventListener('change', () => {
+    stop(); visibleRange = el<HTMLSelectElement>('visible-range').value as typeof visibleRange;
+    visibleAnchor = Math.min(view().benchmark.length - 1, end + (state.tf === 'weekly' ? 13 : 63)); render();
   });
   rotation.on('click', (event: any) => { if (catalog.has(event.seriesName)) { highlighted = highlighted === event.seriesName ? null : event.seriesName; render(); } });
   el('table-body').addEventListener('click', event => {
@@ -312,23 +355,26 @@ async function boot() {
     el('table-toggle').textContent = el('table-content').hidden ? 'Mostrar tabla' : 'Ocultar tabla';
     el('table-toggle').setAttribute('aria-expanded', String(!el('table-content').hidden));
   });
-  el('share').addEventListener('click', async () => {
-    writeUrl();
+  async function copyLink(historical: boolean) {
+    stop();
+    const url = `${location.origin}${location.pathname}?${serialize(state, historical ? currentDate() : undefined)}${location.hash}`;
     try {
-      await navigator.clipboard.writeText(location.href); toast('Enlace copiado · abrirá los cierres más recientes');
+      await navigator.clipboard.writeText(url); toast(historical ? 'Enlace copiado · restaurará esta fecha' : 'Enlace copiado · abrirá los cierres más recientes');
     } catch {
       el('notice').hidden = false; el('notice').replaceChildren();
       const label = document.createElement('label'); label.textContent = 'Copia este enlace: ';
-      const field = document.createElement('input'); field.type = 'text'; field.value = location.href; field.readOnly = true; field.setAttribute('aria-label', 'Enlace para copiar');
+      const field = document.createElement('input'); field.type = 'text'; field.value = url; field.readOnly = true; field.setAttribute('aria-label', 'Enlace para copiar');
       label.append(field); el('notice').append(label); field.focus(); field.select();
     }
-  });
-  addEventListener('popstate', () => { state = parseState(location.search, data); configurationChanged(); });
+  }
+  el('share').addEventListener('click', () => copyLink(false));
+  el('share-date').addEventListener('click', () => copyLink(true));
+  addEventListener('popstate', () => { state = parseState(location.search, data); configurationChanged(state.date); });
   const observer = new ResizeObserver(() => { clearTimeout(emptyTimer); emptyTimer = setTimeout(() => { rotation.resize(); benchmarkChart.resize(); if (lock) render(true); }, 60); });
   observer.observe(el('rotation-chart')); observer.observe(el('benchmark-chart'));
   if (matchMedia('(max-width: 760px)').matches) el<HTMLDetailsElement>('settings').open = false;
   if (Object.keys(data.errors).length) { el('notice').textContent = `Instrumentos no disponibles: ${Object.keys(data.errors).join(', ')}. El resto del catálogo funciona.`; el('notice').hidden = false; }
-  configurationChanged();
+  configurationChanged(state.date);
   if (location.hash === '#para-kiko') {
     el<HTMLDetailsElement>('methodology').open = true;
     requestAnimationFrame(() => el('para-kiko').scrollIntoView({ block: 'start' }));

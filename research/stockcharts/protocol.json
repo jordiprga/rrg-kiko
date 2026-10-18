@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "training": "first floor(0.70*N) Nasdaq dates chronologically",
+  "holdout": "remaining Nasdaq dates and all Dow dates",
+  "search": {
+    "smooth": [
+      1,
+      10
+    ],
+    "reference": [
+      10,
+      52
+    ],
+    "momentum": [
+      2,
+      13
+    ]
+  },
+  "scale": "positive least-squares slope per axis centered at 100, trained on Nasdaq training dates only",
+  "objective": "mean squared error of both axes in Nasdaq training only",
+  "rmseMax": 0.2,
+  "rmseReductionMin": 0.5,
+  "quadrantMin": 0.95,
+  "axisExclusion": "uncertainty intersects 100; additionally report distance <0.10 separately",
+  "minimumPerAsset": 40,
+  "kikoDates": [
+    "2026-01-02",
+    "2026-03-20"
+  ],
+  "promotion": "all criteria, including same quadrant and last-step direction in Kiko cases; no automatic public promotion"
+}

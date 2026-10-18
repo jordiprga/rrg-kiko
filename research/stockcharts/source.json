@@ -1,0 +1,28 @@
+{
+  "source": "https://stockcharts.com/freecharts/rrg/",
+  "collectedOn": "2026-10-18",
+  "frequency": "weekly",
+  "symbols": {
+    "IXIC": "$COMPQ",
+    "DJI": "$INDU",
+    "GSPC": "$SPX"
+  },
+  "coordinateMethod": "Linear inversion of rendered SVG head transforms using numeric axis ticks. Not displayed numeric tooltips and not screenshot pixel estimates. For the first six Dow dates the current head was clamped at the visible edge: use the actual small circles from the 30-period tail ending 2026-05-22, not the clamped head.",
+  "uncertaintyPerAxis": 0.01,
+  "pricePrecision": 0.005,
+  "tail": "30 or 10 intervals, 30 or 10 small circles plus current head; full point count N+1",
+  "dates": "Effective last trading session printed by StockCharts; includes Thursday 2026-04-02, 2026-06-18 and 2026-07-02.",
+  "scope": "Local research; do not include observations or QA context in public site.",
+  "calibrationExample": {
+    "end": "2026-10-16",
+    "xTick100": 357.5,
+    "xPixelsPerPoint": 36.68171557562077,
+    "yTick100": 156,
+    "yPixelsPerPoint": -41.71122994652399,
+    "compqHead": [
+      360.4345372460496,
+      157.25133689839578
+    ]
+  },
+  "warmupStockCharts": "Unknown; not inferred from displayed one-year range."
+}

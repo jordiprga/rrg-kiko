@@ -9,6 +9,7 @@ export interface GroupSettings {
   name: string; benchmarks: string[]; defaultBenchmark: string; defaults: string[];
 }
 export interface View {
+  method?: 'relative-ema-v1'; calculationVersion?: 1;
   parameters: { n: number; m: number };
   benchmark: [string, number][];
   assets: Record<string, Point[]>;
@@ -22,7 +23,7 @@ export interface Dataset {
 }
 export interface State {
   group: Group; tf: Timeframe; benchmark: string; selected: string[];
-  tail: number; arrows: boolean; hidden: string[];
+  tail: number; arrows: boolean; hidden: string[]; date?: string;
 }
 export const quadrants = {
   leading: { name: 'Líder', color: '#39765e', fill: '#eff6ec', hint: 'Fuerza y momentum por encima de 100' },
@@ -54,11 +55,16 @@ export function parseState(search: string, data: Dataset): State {
   return { ...base, tf: p.get('tf') === 'daily' ? 'daily' : 'weekly', selected,
     benchmark: data.groups[base.group]!.benchmarks.includes(b) ? b : base.benchmark,
     tail: p.has('tail') && Number.isFinite(rawTail) ? Math.max(1, Math.min(30, Math.round(rawTail))) : 17,
+    ...(validDate(p.get('date')) ? { date: p.get('date')! } : {}),
     arrows: p.get('a') !== '0', hidden: unique(p.get('h') ?? '').filter(i => selected.includes(i)) };
 }
-export function serialize(state: State): string {
+export function validDate(value: string | null): boolean {
+  return !!value && /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+}
+export function serialize(state: State, date?: string): string {
   return new URLSearchParams({ v: '1', g: state.group, tf: state.tf, b: state.benchmark,
     s: state.selected.join(','), tail: String(state.tail), a: state.arrows ? '1' : '0',
+    ...(validDate(date ?? null) ? { date: date! } : {}),
     ...(state.hidden.length ? { h: state.hidden.join(',') } : {}) }).toString();
 }
 export function indexAtOrBefore<T extends [string, ...unknown[]]>(points: T[], date: string): number {
@@ -90,6 +96,10 @@ export function validateDataset(value: unknown): Dataset {
     for (const benchmark of group.benchmarks) for (const tf of ['daily', 'weekly'] as const) {
       const view = d.views[benchmark]?.[tf];
       if (!view || view.benchmark.length < 31 || !view.assets) throw new Error('Falta histórico válido.');
+      if ((view.method !== undefined && view.method !== 'relative-ema-v1')
+        || (view.calculationVersion !== undefined && view.calculationVersion !== 1)
+        || view.parameters.n !== (tf === 'weekly' ? 10 : 50)
+        || view.parameters.m !== (tf === 'weekly' ? 4 : 20)) throw new Error('Método o parámetros incompatibles.');
       const check = (rows: (string | number)[][], columns: number) => {
         let previous = '';
         for (const row of rows) {
@@ -104,4 +114,15 @@ export function validateDataset(value: unknown): Dataset {
     }
   }
   return d;
+}
+
+// Visible range only; calculations always retain the complete history.
+export function visibleWindow(series: [string, number][], anchor: number, full: boolean): [number, number] {
+  if (full) return [0, series.length - 1];
+  const date = new Date(series[anchor][0] + 'T12:00:00Z');
+  date.setUTCFullYear(date.getUTCFullYear() - 1);
+  return [Math.max(0, indexAtOrBefore(series, date.toISOString().slice(0, 10))), anchor];
+}
+export function draggedEnd(initial: number, deltaPixels: number, width: number, start: number, finish: number, count: number): number {
+  return Math.max(0, Math.min(count - 1, initial + Math.round(deltaPixels / Math.max(1, width) * (finish - start))));
 }

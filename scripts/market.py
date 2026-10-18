@@ -103,6 +103,7 @@ def make_view(prices: dict[str, pd.Series], ids: list[str], benchmark: str,
         raise ValueError(f"Sin activos para {benchmark}/{timeframe}")
     first = min(values[0][0] for values in assets.values())
     return {
+        "method": "relative-ema-v1", "calculationVersion": 1,
         "parameters": {"n": n, "m": m},
         "benchmark": [[day.date().isoformat(), round(float(price), 6)]
                       for day, price in reference.items() if day.date().isoformat() >= first],
