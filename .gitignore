@@ -5,6 +5,7 @@ dist/
 .python-deps/
 __pycache__/
 .pytest_cache/
+.pytest-tmp/
 *.pyc
 .env
 .env.*
