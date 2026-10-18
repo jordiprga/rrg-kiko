@@ -18,6 +18,7 @@ scripts/dev.ps1
 scripts/publish.ps1
 public/data/market.json
 public/data/refresh-status.json
+public/data/strategies/
 artifacts/
 test-results/
 playwright-report/

@@ -1,5 +1,6 @@
 import './style.css';
 import { progressMarkup } from './progress';
+import { preserveStrategy } from './strategies-model';
 import { initChart, rotationOptions, benchmarkOptions, palette, type PlotAsset } from './charts';
 import { defaults, parseState, serialize, trail, indexAtOrBefore, scaleBounds, quadrant, quadrants,
   validateDataset, visibleWindow, draggedEnd, type Dataset, type State, type Group, type Timeframe, type Point } from './model';
@@ -97,9 +98,10 @@ async function boot() {
       <div class="identity"><div class="brand-mark">${icon('orbit')}</div><div><h1>Órbita<span> / rotación relativa</span></h1><p>Una perspectiva distinta del mercado.</p></div></div>
       <div class="header-actions"><span class="status-pill ${stale || refreshFailed ? 'warning' : ''}"><i></i>${stale ? 'Revisar antigüedad' : refreshFailed ? 'Última copia válida' : 'Cierres disponibles'}</span><button id="share" class="button primary">${icon('share')}<span>Copiar enlace</span></button></div>
     </header>
-    <nav class="page-tabs" role="tablist" aria-label="Secciones de Órbita"><button id="explorer-tab" role="tab" aria-selected="true" aria-controls="explorer-panel">Explorar mercado</button><button id="progress-tab" role="tab" aria-selected="false" aria-controls="progress-panel" tabindex="-1">Qué he hecho</button></nav>
+    <nav class="page-tabs" role="tablist" aria-label="Secciones de Órbita"><button id="explorer-tab" role="tab" aria-selected="true" aria-controls="explorer-panel">Explorar mercado</button><button id="strategies-tab" role="tab" aria-selected="false" aria-controls="strategies-panel" tabindex="-1">Estrategias</button><button id="progress-tab" role="tab" aria-selected="false" aria-controls="progress-panel" tabindex="-1">Qué he hecho</button></nav>
     <div id="notice" class="notice" role="status" hidden></div>
     ${progressMarkup}
+    <section id="strategies-panel" role="tabpanel" aria-labelledby="strategies-tab" hidden></section>
     <div id="explorer-panel" role="tabpanel" aria-labelledby="explorer-tab">
     ${methodologyMarkup}
     ${stale || refreshFailed || futureClock ? `<div class="notice">${stale ? 'Los históricos tienen más de cinco días naturales. ' : ''}${refreshFailed ? 'La última actualización falló; se conserva el conjunto válido anterior. ' : ''}${futureClock ? 'La fecha de tu dispositivo es anterior a la del dataset. ' : ''}Consulta las fechas antes de interpretar el gráfico.</div>` : ''}
@@ -153,7 +155,7 @@ async function boot() {
   const benchmarkChart = initChart(el('benchmark-chart'));
   const toast = (message: string) => { el('toast').textContent = message; el('toast').hidden = false; setTimeout(() => el('toast').hidden = true, 3000); };
   let emptyTimer: ReturnType<typeof setTimeout> | undefined;
-  const writeUrl = () => history.replaceState(null, '', `${location.pathname}?${serialize(state, state.date)}${location.hash}`);
+  const writeUrl = () => history.replaceState(null, '', `${location.pathname}?${preserveStrategy(location.search, serialize(state, state.date))}${location.hash}`);
 
   function stop() {
     clearInterval(timer); timer = undefined; playing = false;
@@ -374,32 +376,49 @@ async function boot() {
       label.append(field); el('notice').append(label); field.focus(); field.select();
     }
   }
-  el('share').addEventListener('click', () => copyLink(false));
+  el('share').addEventListener('click', () => {
+    if (location.hash === '#estrategias' && strategies) void strategies.then(module => module.share());
+    else void copyLink(false);
+  });
   el('share-date').addEventListener('click', () => copyLink(true));
   addEventListener('popstate', () => { state = parseState(location.search, data); configurationChanged(state.date); });
-  function selectPage(report: boolean, updateHash = true) {
+  type Page = 'explorer' | 'progress' | 'strategies';
+  let strategies: Promise<Awaited<ReturnType<typeof import('./strategies')['mountStrategies']>>> | undefined;
+  function selectPage(page: Page, updateHash = true) {
     stop();
-    el('explorer-panel').hidden = report; el('progress-panel').hidden = !report;
-    for (const [id, selected] of [['explorer-tab', !report], ['progress-tab', report]] as const) {
+    el('explorer-panel').hidden = page !== 'explorer'; el('progress-panel').hidden = page !== 'progress';
+    el('strategies-panel').hidden = page !== 'strategies';
+    for (const [id, selected] of [['explorer-tab', page === 'explorer'], ['strategies-tab', page === 'strategies'], ['progress-tab', page === 'progress']] as const) {
       el(id).setAttribute('aria-selected', String(selected)); el(id).tabIndex = selected ? 0 : -1;
     }
-    if (updateHash) history.replaceState(null, '', `${location.pathname}${location.search}${report ? '#que-he-hecho' : ''}`);
-    if (!report) requestAnimationFrame(() => { rotation.resize(); benchmarkChart.resize(); render(true); });
+    if (updateHash) history.replaceState(null, '', `${location.pathname}${location.search}${page === 'progress' ? '#que-he-hecho' : page === 'strategies' ? '#estrategias' : ''}`);
+    if (page === 'explorer') requestAnimationFrame(() => { rotation.resize(); benchmarkChart.resize(); render(true); });
+    if (page === 'strategies') {
+      strategies ??= import('./strategies').then(module => module.mountStrategies(el('strategies-panel')));
+      void strategies.then(module => requestAnimationFrame(() => module.resize())).catch(() => {
+        el('strategies-panel').textContent = 'No se pudo cargar Estrategias. Recarga la página para reintentar.';
+      });
+    }
   }
-  el('explorer-tab').addEventListener('click', () => selectPage(false));
-  el('progress-tab').addEventListener('click', () => selectPage(true));
+  el('explorer-tab').addEventListener('click', () => selectPage('explorer'));
+  el('progress-tab').addEventListener('click', () => selectPage('progress'));
+  el('strategies-tab').addEventListener('click', () => selectPage('strategies'));
   el('explorer-tab').parentElement!.addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-    event.preventDefault(); const report = event.key === 'End' || (event.key !== 'Home' && el('progress-tab').getAttribute('aria-selected') !== 'true');
-    selectPage(report); el(report ? 'progress-tab' : 'explorer-tab').focus();
+    event.preventDefault();
+    const tabs: Page[] = ['explorer', 'strategies', 'progress'];
+    const active = tabs.findIndex(p => el(p + '-tab').getAttribute('aria-selected') === 'true');
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? 2 : (active + (event.key === 'ArrowRight' ? 1 : -1) + 3) % 3;
+    selectPage(tabs[next]); el(tabs[next] + '-tab').focus();
   });
-  addEventListener('hashchange', () => selectPage(location.hash === '#que-he-hecho', false));
+  addEventListener('hashchange', () => selectPage(location.hash === '#que-he-hecho' ? 'progress' : location.hash === '#estrategias' ? 'strategies' : 'explorer', false));
   const observer = new ResizeObserver(() => { clearTimeout(emptyTimer); emptyTimer = setTimeout(() => { rotation.resize(); benchmarkChart.resize(); if (lock) render(true); }, 60); });
   observer.observe(el('rotation-chart')); observer.observe(el('benchmark-chart'));
   if (matchMedia('(max-width: 760px)').matches) el<HTMLDetailsElement>('settings').open = false;
   if (Object.keys(data.errors).length) { el('notice').textContent = `Instrumentos no disponibles: ${Object.keys(data.errors).join(', ')}. El resto del catálogo funciona.`; el('notice').hidden = false; }
   configurationChanged(state.date);
-  if (location.hash === '#que-he-hecho') selectPage(true, false);
+  if (location.hash === '#que-he-hecho') selectPage('progress', false);
+  if (location.hash === '#estrategias') selectPage('strategies', false);
   if (location.hash === '#para-kiko') {
     el<HTMLDetailsElement>('methodology').open = true;
     requestAnimationFrame(() => el('para-kiko').scrollIntoView({ block: 'start' }));

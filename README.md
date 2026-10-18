@@ -2,6 +2,8 @@
 
 Explorador de fuerza relativa para índices y sectores estadounidenses. Diario/semanal, cuatro cuadrantes, colas de 1–30 periodos, reproducción histórica, zoom, tabla y enlaces compartibles.
 
+La pestaña **Estrategias** detecta los giros y cruces de Kiko y permite abrir casos reales con el futuro oculto. Incluye confirmación de dos periodos, precio/órbita sincronizados, percentiles y nueve zonas exploratorias. El laboratorio incorpora simulación de entradas/salidas y walk-forward en Python, pero el estudio completo del S&P 500 permanece **no evaluable**: faltan datos gratuitos contrastados de sectores históricos y empresas desaparecidas. [Cobertura, comandos, contratos y metodología](research/strategies/README.md).
+
 **[Abrir Órbita](https://jordiprga.github.io/rrg-kiko/)**
 
 ## Ejecutar

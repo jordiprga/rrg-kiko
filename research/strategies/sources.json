@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "checkedOn": "2026-10-18",
+  "budget": 0,
+  "priceProbes": [{"ticker":"SPY","status":"candidate-only","sessions":4475,"first":"2009-01-02","last":"2026-10-16"},{"ticker":"XLK","status":"candidate-only","sessions":4475,"first":"2009-01-02","last":"2026-10-16"},{"ticker":"AAPL","status":"candidate-only","sessions":4475,"first":"2009-01-02","last":"2026-10-16"},{"ticker":"AABA","status":"fetch-failed","detail":"Yahoo no entregó OHLCV en la comprobación del 18/10/2026."},{"ticker":"ABKFQ","status":"fetch-failed","detail":"Yahoo no entregó OHLCV en la comprobación del 18/10/2026."}],
+  "candidateSnapshot": {"version": 1, "status": "candidate-only", "intervalRows": 1262, "tickersSince2010": 848, "closedIntervalsSince2010": 363, "latestChange": "2026-08-18", "retrievedAt": "2026-10-18T20:37:47.099480+00:00", "contentHash": "b2f4fe2f2e4dce8eaf0eb4fbd3946a32a20c1ddfe69687dfca3b6b59a0b71f9f", "url": "https://raw.githubusercontent.com/fja05680/sp500/master/sp500_ticker_start_end.csv", "stableIdentitiesVerified": false, "primaryEvidenceVerified": false, "historicalSectorsVerified": false, "delistingPricesVerified": false},
+  "sources": [
+    {"id": "sp500-open", "name": "fja05680/sp500", "url": "https://github.com/fja05680/sp500", "role": "membership-candidate", "status": "partial", "limitation": "Recopilación por ticker; su autor advierte que los cambios seleccionados de Wikipedia no reconstruyen por sí solos el pasado. Faltan contraste primario completo, identidad estable, sectores históricos y liquidaciones. La licencia de código no acredita todos los datos de origen."},
+    {"id": "sp-global", "name": "Anuncios de S&P Dow Jones Indices", "url": "https://www.spglobal.com/spdji/en/index-announcements/", "role": "primary-membership-evidence", "status": "candidate", "limitation": "Los anuncios deben verificarse individualmente con fecha efectiva y de publicación; no existe aún un libro completo de evidencias importado."},
+    {"id": "sec-nport", "name": "SEC · Form N-PORT", "url": "https://www.sec.gov/data-research/sec-markets-data/form-n-port-data-sets", "role": "holdings-cross-check", "status": "partial", "limitation": "Datos públicos desde 2019, con fechas de publicación posteriores al periodo declarado. Carteras de fondos no equivalen a composición diaria ni a clasificación GICS histórica completa."},
+    {"id": "yahoo", "name": "Yahoo Finance · yfinance", "url": "https://ranaroussi.github.io/yfinance/", "role": "ohlcv-candidate", "status": "partial", "limitation": "No se ha acreditado cobertura integral de excluidas, liquidaciones ni permiso general de redistribución. El catálogo local contiene índices y ETFs, no el universo histórico S&P 500."}
+  ]
+}

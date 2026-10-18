@@ -42,11 +42,26 @@ jobs:
         run: python -m scripts.market
       - name: Validate snapshot before publication
         run: python -m scripts.validate_data --max-age-days 14
+      - uses: actions/cache/restore@v4
+        with:
+          path: .cache/strategies/prospective.jsonl
+          key: strategy-registry-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: strategy-registry-
+      - name: Build strategy coverage and real historical cases
+        run: python -m scripts.strategies
+      - uses: actions/cache/save@v4
+        with:
+          path: .cache/strategies/prospective.jsonl
+          key: strategy-registry-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/cache/save@v4
         with:
           path: public/data
           key: market-data-${{ github.run_id }}-${{ github.run_attempt }}
       - run: pnpm build
+      - name: Install browser for visual interaction tests
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Verify desktop, mobile and Pages subroute
+        run: pnpm test:e2e
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
