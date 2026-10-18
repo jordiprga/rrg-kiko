@@ -70,7 +70,7 @@ async function boot() {
               <h4>2. Calculamos la posición horizontal: X</h4>
               <p>La vista semanal de índices frente al S&P compara la media simple de RS de 10 semanas con la de 30. El resto de vistas usa RS frente a una media exponencial (EMA), que da más peso a las observaciones recientes. Multiplicamos por 100 para situar la referencia en 100.</p>
               <p><code>Semanal de índices / S&P 500: X = 100 × SMA(RS, 10) / SMA(RS, 30). Resto: X = 100 × RS / EMA(RS, N)</code></p>
-              <p><strong>X &gt; 100:</strong> el cociente activo/benchmark está por encima de su media reciente. <strong>X &lt; 100:</strong> está por debajo. X=102 significa que el numerador de esa vista está un 2 % sobre su media de referencia; no significa que el activo haya superado al índice en un 2 % durante un plazo concreto.</p>
+              <p><strong>X &gt; 100:</strong> la media corta de fuerza relativa supera la larga en SMA; en EMA, RS supera su media reciente. <strong>X &lt; 100:</strong> la relación anterior está por debajo de 100. X=102 significa que el numerador de esa vista está un 2 % sobre su media de referencia; no significa que el activo haya superado al índice en un 2 % durante un plazo concreto.</p>
               <h4>3. Calculamos la posición vertical: Y</h4>
               <p>Comparamos X con su media simple de 9 semanas en la vista semanal de índices frente al S&P; en el resto se usa una media exponencial.</p>
               <p><code>Semanal de índices / S&P 500: Y = 100 × X / SMA(X, 9). Resto: Y = 100 × X / EMA(X, M)</code></p>
