@@ -48,6 +48,11 @@ test('current stocks show real aggregate metrics, temporal splits and shareable 
   await page.getByRole('button',{name:'Copiar este estudio'}).click();
   await expect(page.getByRole('textbox',{name:'Enlace del estudio'})).toHaveValue(/capital=25000/);
   await page.screenshot({path:testInfo.outputPath('current-capital.png'),fullPage:true});
+  await page.locator('#quant-curve').screenshot({path:testInfo.outputPath('capital-curve.png')});
+  await page.locator('summary').filter({hasText:'Walk-forward · elegir con el pasado'}).click();
+  await expect(page.locator('#quant-walk-curve canvas')).toBeVisible();
+  await page.locator('#quant-walk-curve').screenshot({path:testInfo.outputPath('walk-curve.png')});
+  await page.locator('summary').filter({hasText:'Walk-forward · elegir con el pasado'}).click();
   expect(errors).toEqual([]);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   await page.locator('#quant-mode').selectOption('entries');

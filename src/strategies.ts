@@ -177,7 +177,8 @@ export async function mountStrategies(container: HTMLElement) {
     container.querySelectorAll<HTMLButtonElement>('[data-case]').forEach(b => b.addEventListener('click', async () => { state.caseId = b.dataset.case!; state.page = 'case'; updateUrl(); await render().catch(showError); }));
     container.querySelector('#study-share')?.addEventListener('click', share);
     if (state.page === 'results' && currentReport && state.tf === 'weekly') {
-      container.querySelector<HTMLSelectElement>('#study-symbol')!.disabled=true;
+      container.querySelector<HTMLSelectElement>('#study-symbol')!.closest('label')!.hidden=true;
+      container.querySelector('.strategy-controls')!.classList.add('strategy-aggregate-controls');
       if(quantControls.mode==='allocation') for(const id of ['study-rule','study-confirm','study-ref','study-strong','study-volume']) {
         const input=container.querySelector<HTMLInputElement>('#'+id); if(input) input.closest('label')!.hidden=true;
       }

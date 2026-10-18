@@ -90,6 +90,8 @@ def parse_catalog(content: bytes) -> list[dict]:
     result = [dict(id=r['Symbol'].replace('.', '-'), ticker=r['Symbol'].replace('.', '-'),
         symbol=r['Symbol'], name=r['Security'], sector=r['GICS Sector'],
         cik=r['CIK'], etf=SECTOR_ETFS[r['GICS Sector']]) for r in rows]
+    if any(not re.fullmatch(r'[A-Z][A-Z0-9-]{0,15}',r['id']) or not r['cik'].isdigit() for r in result):
+        raise ValueError('Identificador de valor inválido en el catálogo')
     if not 490 <= len(result) <= 520 or len({r['id'] for r in result}) != len(result):
         raise ValueError('El catálogo no contiene un universo completo o contiene duplicados')
     return sorted(result, key=lambda r:r['id'])

@@ -81,6 +81,8 @@ jobs:
           manifest['currentRefreshStatusUrl'] = 'current-refresh-status.json'
           atomic_json(path, manifest)
           PY
+      - name: Keep only the complete reports referenced by the valid manifest
+        run: python -m scripts.prune_strategy_reports
       - uses: actions/cache/save@v4
         with:
           path: .cache/strategies/prospective.jsonl
