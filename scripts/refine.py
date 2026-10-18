@@ -135,7 +135,7 @@ def plot(frames, output):
     import matplotlib.pyplot as plt
     fig, axes = plt.subplots(len(frames), 3, figsize=(15, 4 * len(frames)))
     for row, frame in enumerate(frames):
-        for method, label, color, style in [('old', 'Actual EMA', '#bb795d', '-'), ('reference', 'StockCharts SVG', '#222', '-'), ('candidate', 'SMA 10/30/9', '#2e8396', '--')]:
+        for method, label, color, style in [('old', 'Inicial EMA', '#bb795d', '-'), ('reference', 'StockCharts SVG', '#222', '-'), ('candidate', 'SMA 10/30/9', '#2e8396', '--')]:
             axes[row, 0].plot(frame[method + '_x'], frame[method + '_y'], style, label=label, color=color, linewidth=1.2)
             for col, axis in [(1, 'x'), (2, 'y')]:
                 axes[row, col].plot(frame.index, frame[method + '_' + axis], style, label=label, color=color, linewidth=1.2)
