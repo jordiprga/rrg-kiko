@@ -26,18 +26,40 @@ test('real RUT case hides the future, reveals it and restores its shared URL und
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBeTruthy();
 });
 
-test('coverage blocks stock conclusions and failed clipboard offers a usable URL', async ({page}, testInfo) => {
+test('current stocks show real aggregate metrics, temporal splits and shareable capital', async ({page}, testInfo) => {
+  const errors: string[]=[];
+  page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { configurable:true, value:{writeText:async()=>{throw new Error('denied');}} }));
   await page.goto('./#estrategias');
-  await page.locator('#study-universe').selectOption('stocks');
-  await expect(page.getByRole('heading', {name:'Universo todavía no evaluable'})).toBeVisible();
-  await expect(page.locator('.strategy-coverage').first()).toContainText('848 tickers');
-  await page.getByRole('button', {name:'Resultados', exact:true}).click();
-  await expect(page.getByRole('heading', {name:'Todavía no podemos medir la ventaja en el S&P 500 histórico'})).toBeVisible();
-  await expect(page.locator('.strategy-metrics')).toContainText('Sin conclusión');
-  await page.getByRole('button', {name:'Copiar este estudio'}).click();
-  await expect(page.getByRole('textbox', {name:'Enlace del estudio'})).toHaveValue(/universe=stocks/);
-  await page.screenshot({path:testInfo.outputPath('stock-coverage.png'),fullPage:true});
+  await expect(page.getByRole('heading',{name:'Del giro a una cartera medible'})).toBeVisible();
+  await expect(page.locator('.quant-timeline')).toContainText('In sample');
+  await expect(page.locator('.quant-timeline')).toContainText('Out of sample');
+  await expect(page.locator('#quant-period')).toHaveValue('test');
+  await expect(page.locator('#quant-portfolio option')).toHaveCount(144);
+  await expect(page.locator('.quant-metrics').first()).toContainText('CAGR');
+  await expect(page.locator('.quant-metrics').first()).not.toContainText('—');
+  await expect(page.locator('#quant-curve canvas')).toBeVisible();
+  await page.locator('#quant-capital').fill('25000');
+  await page.locator('#quant-capital').dispatchEvent('change');
+  await expect(page).toHaveURL(/capital=25000/);
+  const shared=page.url();await page.reload();
+  await expect(page.locator('#quant-capital')).toHaveValue('25000');
+  await expect(page.locator('#quant-period')).toHaveValue('test');
+  await page.getByRole('button',{name:'Copiar este estudio'}).click();
+  await expect(page.getByRole('textbox',{name:'Enlace del estudio'})).toHaveValue(/capital=25000/);
+  await page.screenshot({path:testInfo.outputPath('current-capital.png'),fullPage:true});
+  expect(errors).toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
+  await page.locator('#quant-mode').selectOption('entries');
+  await expect(page.locator('#quant-entry-table tbody tr')).toHaveCount(4);
+  await page.locator('#quant-exit').selectOption('all');
+  await expect(page.locator('#quant-entry-table tbody tr')).toHaveCount(68);
+  await page.locator('#quant-exit').selectOption('time-13');
+  await page.getByRole('button',{name:'Ver curva',exact:true}).first().click();
+  await expect(page.locator('#quant-curve canvas')).toBeVisible();
+  await page.locator('#quant-period').selectOption('train');
+  await expect(page).toHaveURL(/period=train/);
+  expect(shared).toContain('universe=stocks');
 });
 
 test('three main tabs support keyboard and preserve explorer settings', async ({page}) => {

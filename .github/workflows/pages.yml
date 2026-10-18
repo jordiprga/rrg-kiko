@@ -49,6 +49,16 @@ jobs:
           restore-keys: strategy-registry-
       - name: Build strategy coverage and real historical cases
         run: python -m scripts.strategies
+      - name: Download all current S&P 500 constituents and index ETF proxies
+        id: current-data
+        continue-on-error: true
+        run: python -u -m scripts.current_universe
+      - name: Calculate current-universe strategies and capital allocation
+        id: current-study
+        continue-on-error: true
+        run: python -u -m scripts.current_study
+      - name: Require a valid current-universe report
+        run: python -c "import json,pathlib; p=pathlib.Path('public/data/strategies'); m=json.loads((p/'manifest.json').read_text()); r=json.loads((p/m['currentStudyUrl']).read_text()); assert r['universeCount']>=490 and len(r['allocations']['candidates'])==144"
       - uses: actions/cache/save@v4
         with:
           path: .cache/strategies/prospective.jsonl

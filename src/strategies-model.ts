@@ -33,6 +33,8 @@ export interface StrategyManifest {
   sources: { id: string; name: string; url: string; status: string; limitation: string }[];
   cases: { id: string; securityId: string; name: string; timeframe: Timeframe; url: string; count: number; scope: string; referenceType?: string }[];
   stockStudyUrl: string | null; studyState: string; prospective: { count: number; added: number; frozenOn: string; lastHash: string };
+  currentStudyUrl?: string;
+  currentCoverage?: {asOf: string; count: number; latestSession: string; start: string};
   candidateCoverage?: { intervalRows: number; tickersSince2010: number; closedIntervalsSince2010: number; latestChange: string; contentHash: string };
   priceProbes?: {ticker: string; status: string; sessions?: number; first?: string; last?: string}[];
 }
@@ -62,7 +64,7 @@ export function strategySearch(state: StrategyState, search = ''): string {
 }
 export function preserveStrategy(search: string, explorer: string): string {
   const current = new URLSearchParams(search), next = new URLSearchParams(explorer);
-  for (const key of ['sv', 'stf', 'symbol', 'rule', 'confirm', 'universe', 'ref', 'strong', 'vol', 'study', 'case']) {
+  for (const key of ['sv', 'stf', 'symbol', 'rule', 'confirm', 'universe', 'ref', 'strong', 'vol', 'study', 'case', 'period', 'exit', 'capital', 'mode', 'portfolio']) {
     if (current.has(key)) next.set(key, current.get(key)!);
   }
   return next.toString();
@@ -82,6 +84,7 @@ export function validateManifest(value: unknown): StrategyManifest {
     safeArtifact(d.stockStudyUrl);
     if (d.audit.status !== 'eligible' || !d.audit.publicationAllowed) throw new Error('Estudio sin auditoría o permiso de publicación');
   }
+  if (d.currentStudyUrl) safeArtifact(d.currentStudyUrl);
   return d;
 }
 export function validateCase(value: unknown): CaseData {

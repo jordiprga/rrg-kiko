@@ -57,7 +57,7 @@ class SectorMembership(Membership):
     etf: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Bar:
     date: str
     open: float

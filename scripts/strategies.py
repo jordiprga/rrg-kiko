@@ -390,6 +390,14 @@ def build(output: Path, input_path: Path | None = None, now: pd.Timestamp | None
                     cases=[{**c, "url": f"{run_id}/{c['url']}"} for c in cases], prospective=prospective,
                     entryNames=ENTRY_NAMES, stockSignals= len(stock["signals"]) if stock else 0, candidateCoverage=candidate_coverage,
                     priceProbes=source_audit.get('priceProbes', []))
+    # The current-constituent study answers a different question from PIT audit.
+    # Keep its last valid calculated output if its separate refresh later fails.
+    if previous_manifest.exists():
+        previous=json.loads(previous_manifest.read_text(encoding='utf-8'))
+        if previous.get('currentStudyUrl'):
+            manifest['currentStudyUrl']=previous['currentStudyUrl']
+            manifest['currentCoverage']=previous['currentCoverage']
+            manifest['cases'] += [c for c in previous['cases'] if c['scope']=='stock-study']
     atomic_json(output / "manifest.json", manifest)
     atomic_json(output / 'refresh-status.json', dict(version=1, ok=True, attemptedAt=now.isoformat()))
     return manifest

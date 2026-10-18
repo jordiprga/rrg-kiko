@@ -1,4 +1,5 @@
 import './strategies.css';
+import { currentResultsMarkup, bindCurrentResults, researchControls } from './current-results';
 import { initChart, rotationOptions, type Chart } from './charts';
 import { indexAtOrBefore, scaleBounds, type Point } from './model';
 import { entryNames, parseStrategy, strategySearch, validateCase, validateManifest, safeArtifact,
@@ -17,6 +18,8 @@ export async function mountStrategies(container: HTMLElement) {
   let priceChart: Chart | undefined, orbitChart: Chart | undefined;
   let resultCharts: Chart[] = [];
   let stockReport: any;
+  let currentReport: any;
+  const quantControls = researchControls();
   let executionDetails: Record<string, any> | undefined;
   let executionRule = 'time-13';
   const base = `${import.meta.env.BASE_URL}data/strategies/`;
@@ -27,7 +30,7 @@ export async function mountStrategies(container: HTMLElement) {
     return response.json();
   };
   const updateUrl = () => { if (!container.hidden) history.replaceState(null, '', `${location.pathname}?${strategySearch(state, location.search)}#estrategias`); };
-  const status = () => manifest.audit.status === 'eligible' ? 'Auditoría superada' : 'S&P 500 histórico · no evaluable';
+  const status = () => manifest.currentCoverage ? `S&P 500 actual · ${manifest.currentCoverage.count} valores` : manifest.audit.status === 'eligible' ? 'Auditoría superada' : 'S&P 500 histórico · no evaluable';
   const dispose = () => { priceChart?.dispose(); orbitChart?.dispose(); resultCharts.forEach(c=>c.dispose()); resultCharts=[]; priceChart = orbitChart = undefined; };
   const observer = new ResizeObserver(() => { if (!container.hidden) { priceChart?.resize(); orbitChart?.resize(); resultCharts.forEach(c=>c.resize()); drawCase(); } });
   observer.observe(container);
@@ -35,6 +38,7 @@ export async function mountStrategies(container: HTMLElement) {
     container.innerHTML = '<p class="strategy-loading" role="status">Cargando estrategias y cobertura…</p>';
     try {
       manifest = validateManifest(await fetchJson('manifest.json'));
+      if (manifest.currentStudyUrl && !new URLSearchParams(location.search).has('sv')) state = {...state, universe:'stocks',page:'results',tf:'weekly'};
       try {
         const status = await fetchJson('refresh-status.json');
         if (status.ok === false) manifest = { ...manifest, researchRefreshFailed: true } as StrategyManifest;
@@ -49,7 +53,7 @@ export async function mountStrategies(container: HTMLElement) {
     const available = manifest.cases.filter(c => c.timeframe === state.tf && c.scope === (state.universe === 'indices' ? 'index-illustration' : 'stock-study'));
     const stocks = state.universe === 'stocks';
     return `<div class="strategy-controls">
-      <label>Universo<select id="study-universe"><option value="indices" ${!stocks ? 'selected' : ''}>Casos reales · índices</option><option value="stocks" ${stocks ? 'selected' : ''}>S&P 500 histórico</option></select></label>
+      <label>Universo<select id="study-universe"><option value="indices" ${!stocks ? 'selected' : ''}>Casos reales · índices</option><option value="stocks" ${stocks ? 'selected' : ''}>${manifest.currentStudyUrl ? 'S&P 500 · componentes actuales' : 'S&P 500 histórico'}</option></select></label>
       <label>Periodicidad<select id="study-tf"><option value="weekly" ${state.tf === 'weekly' ? 'selected' : ''}>Semanal · principal</option><option value="daily" ${state.tf === 'daily' ? 'selected' : ''}>Diario · exploratorio</option></select></label>
       <label>Activo<select id="study-symbol" ${!available.length ? 'disabled' : ''}>${[...new Map(available.map(c => [c.securityId, c])).values()].map(c => `<option value="${esc(c.securityId)}" ${c.securityId === state.symbol ? 'selected' : ''}>${esc(c.securityId)} · ${esc(c.name)}</option>`).join('')}</select></label>
       <label>Entrada<select id="study-rule"><option value="all">Todas las entradas</option>${Object.entries(entryNames).map(([id, name]) => `<option value="${id}" ${state.rule === id ? 'selected' : ''}>${name}</option>`).join('')}</select></label>
@@ -60,6 +64,7 @@ export async function mountStrategies(container: HTMLElement) {
     </div>`;
   }
   function coverageMarkup() {
+    if (manifest.currentCoverage) return `<details class="strategy-coverage"><summary>Universo actual y límites del estudio</summary><p>Se incluyen los ${manifest.currentCoverage.count} valores de la composición actual del S&P 500, registrada el ${esc(manifest.currentCoverage.asOf)}. Se utiliza su historial disponible desde 2010. No se exige reconstruir empresas excluidas porque no forman parte de este estudio.</p><p>Esto introduce sesgo de supervivencia y aplica los sectores actuales al pasado. Permite comparar estas reglas sobre las acciones actuales; no reproduce la inversión histórica en los componentes que existían entonces. Los datos, métricas, periodos y asignación se detallan en Resultados.</p></details>`;
     const a = manifest.audit;
     return `<details class="strategy-coverage" ${state.universe === 'stocks' && a.status !== 'eligible' ? 'open' : ''}><summary>Cobertura y fuentes · ${esc(status())}</summary>
       <p>El estudio exige componentes y sectores conocidos en cada fecha, acciones excluidas, eventos corporativos y liquidaciones. Los huecos impiden declarar una ventaja.</p>
@@ -77,7 +82,7 @@ export async function mountStrategies(container: HTMLElement) {
   }
   function signalsMarkup() {
     const rows = visibleSignals().slice().reverse();
-    return `<section class="strategy-card"><div class="strategy-card-heading"><div><h3>Señales detectadas</h3><p>${rows.length} eventos · confirmación de ${state.confirmation} periodo${state.confirmation === 1 ? '' : 's'} · ${state.universe === 'indices' ? 'ejemplos de índices, fuera del estudio de acciones' : 'universo histórico auditado'}</p></div></div>
+    return `<section class="strategy-card"><div class="strategy-card-heading"><div><h3>Señales detectadas</h3><p>${rows.length} eventos · confirmación de ${state.confirmation} periodo${state.confirmation === 1 ? '' : 's'} · ${state.universe === 'indices' ? 'ejemplos de índices, fuera del estudio de acciones' : (manifest.currentStudyUrl ? 'componentes actuales · sector actual' : 'universo histórico auditado')}</p></div></div>
       <div class="strategy-table-scroll"><table><thead><tr><th>Detectada al cierre</th><th>Entrada</th><th>Referencia</th><th>Sector</th><th>Volumen relativo</th><th></th></tr></thead><tbody>${rows.slice(0, 150).map(s => `<tr><td>${esc(s.date)}${s.origin_date !== s.date ? `<small>Giro inicial ${esc(s.origin_date)}</small>` : ''}</td><td>${esc(entryNames[s.rule])}</td><td>${esc(s.reference)}</td><td>${esc(s.sector ?? 'No aplica')}</td><td>${decimal(s.relative_volume)}</td><td><button class="strategy-link" data-case="${s.id}">Ver caso →</button></td></tr>`).join('') || '<tr><td colspan="6">No hay señales con estos filtros.</td></tr>'}</tbody></table></div>
       ${rows.length > 150 ? '<p class="strategy-note">Se muestran los 150 eventos más recientes. Filtra por entrada o activo.</p>' : ''}</section>`;
   }
@@ -92,10 +97,15 @@ export async function mountStrategies(container: HTMLElement) {
       <p id="study-coordinates" class="strategy-note"></p>
       <details class="strategy-zones"><summary>Percentiles y nueve zonas · exploratorio</summary><p id="study-percentiles"></p><div class="strategy-zone-grid" id="study-zones" role="img" aria-label="Nueve zonas de terciles de fuerza y momentum"></div><p>Columnas: terciles de fuerza relativa, de menor a mayor. Filas: terciles de momentum, de mayor a menor. Es una clasificación relativa al grupo de esa fecha; los cuatro cuadrantes originales se mantienen.</p></details>
       <p class="strategy-note">${esc(detail.limitations)}</p><p class="strategy-note">Método: ${esc(detail.method)}. ${detail.scope === 'index-illustration' ? 'Volumen de índices: no disponible.' : ''} El futuro se oculta al abrir o cambiar de caso.</p>
-      ${detail.scope === 'stock-study' ? `<label class="strategy-exit-label">Salida simulada<select id="study-exit"><option value="orbit">Líder → Debilitándose</option>${['pct-10','pct-15','pct-20','atr-2','atr-3','atr-4'].flatMap(r => [r, r+'+orbit']).map(r=>`<option value="${r}" ${r===executionRule?'selected':''}>${r.replace('pct-', 'Trailing % ').replace('atr-', 'ATR × ').replace('+orbit',' + órbita')}</option>`).join('')}<option value="time-13" ${executionRule==='time-13'?'selected':''}>13 semanas</option><option value="time-26" ${executionRule==='time-26'?'selected':''}>26 semanas</option></select></label>` : ''}
+      ${detail.scope === 'stock-study' && manifest.stockStudyUrl ? `<label class="strategy-exit-label">Salida simulada<select id="study-exit"><option value="orbit">Líder → Debilitándose</option>${['pct-10','pct-15','pct-20','atr-2','atr-3','atr-4'].flatMap(r => [r, r+'+orbit']).map(r=>`<option value="${r}" ${r===executionRule?'selected':''}>${r.replace('pct-', 'Trailing % ').replace('atr-', 'ATR × ').replace('+orbit',' + órbita')}</option>`).join('')}<option value="time-13" ${executionRule==='time-13'?'selected':''}>13 semanas</option><option value="time-26" ${executionRule==='time-26'?'selected':''}>26 semanas</option></select></label>` : ''}
       <div id="study-execution" class="strategy-note"></div></section>`;
   }
   async function resultsMarkup() {
+    if (manifest.currentStudyUrl) {
+      currentReport ??= await fetchJson(manifest.currentStudyUrl);
+      if (state.tf !== 'weekly') return `<section class="strategy-card"><h3>Estudio de carteras semanal</h3><p>Las comparaciones de capital, entrenamiento y prueba final de acciones se calculan con señales semanales. Selecciona «Semanal · principal». Los ejemplos de índices diarios siguen disponibles en su universo.</p></section>`;
+      return currentResultsMarkup(currentReport,state,quantControls);
+    }
     if (!manifest.stockStudyUrl) return `<section class="strategy-card"><p class="strategy-eyebrow">EVALUACIÓN DE ESTRATEGIAS</p><h3>${manifest.studyState === 'private-results' ? 'Resultados privados · publicación pendiente de derechos de uso' : 'Todavía no podemos medir la ventaja en el S&P 500 histórico'}</h3>
       <p>${manifest.studyState === 'private-results' ? 'El estudio se ha calculado localmente. Las fuentes del conjunto no autorizan la publicación de sus detalles.' : 'Faltan datos materiales del universo histórico. Las señales de los índices sirven para comprobar los giros; no estiman la eficacia de una estrategia sobre acciones.'}</p>
       <div class="strategy-metrics"><div><strong>4 entradas</strong><span>Dos giros y dos cruces</span></div><div><strong>15 salidas</strong><span>Órbita, trailing y plazos fijos</span></div><div><strong>13 semanas</strong><span>Horizonte principal de entradas</span></div><div><strong>Sin conclusión</strong><span>Hasta disponer de evidencia suficiente</span></div></div>
@@ -116,6 +126,7 @@ export async function mountStrategies(container: HTMLElement) {
         <div class="strategy-result-curve" role="img" aria-label="Cartera de referencia y SPY fuera de muestra"></div><p class="strategy-note">Cartera equiponderada y SPY comprado en la primera apertura, ambos valorados al cierre; efectivo al 0 %. Las operaciones, costes y periodos completos están registrados.</p></details>`).join('')}</section>`;
   }
   function protocolMarkup() {
+    if(manifest.currentStudyUrl) return `<details class="strategy-coverage"><summary>Las cuatro entradas y las reglas de cartera</summary><div class="strategy-rules">${Object.entries(entryNames).map(([id,name])=>`<article><strong>${esc(name)}</strong><p>${({'turn-up':'El momentum Y cambia de pendiente no positiva a positiva, permaneciendo en Rezagado.','turn-right':'La fuerza X cambia de pendiente no positiva a positiva, permaneciendo en Rezagado.','lagging-improving':'Y cruza 100 hacia arriba con X por debajo de 100.','improving-leading':'X cruza 100 hacia arriba con Y por encima de 100.'} as Record<string,string>)[id]}</p></article>`).join('')}</div><p>Semanal: X = 100 × SMA(RS,10) / SMA(RS,30); Y = 100 × X / SMA(X,9). Fórmula propia experimental; no equivale a JdK. Sólo semanas completadas y ejecución a la siguiente apertura.</p><p>«Entradas y salidas» compara las reglas con asignación idéntica. «Carteras» añade selección, pesos, límites y efectivo. El protocolo del universo actual, los cortes temporales y las huellas de datos y código aparecen en los resultados. Los ejemplos diarios de índices se mantienen como exploración separada.</p></details>`;
     return `<details class="strategy-coverage"><summary>Reglas, protocolo y seguimiento prospectivo</summary><div class="strategy-rules">${Object.entries(entryNames).map(([id, name]) => `<article><strong>${esc(name)}</strong><p>${({ 'turn-up': 'Y empieza a subir después de un cambio no positivo, mientras el activo permanece en Rezagado.', 'turn-right': 'X empieza a subir después de un cambio no positivo, mientras el activo permanece en Rezagado.', 'lagging-improving': 'Y cruza por encima de 100, con X por debajo de 100.', 'improving-leading': 'X cruza por encima de 100, con Y por encima de 100.' } as Record<string, string>)[id]}</p></article>`).join('')}</div>
       <p>Semanal: X = 100 × SMA(RS,10) / SMA(RS,30); Y = 100 × X / SMA(X,9). Extensión experimental a acciones y sectores. Diario: EMA 50/20, resultados exploratorios separados.</p>
       <p>Salidas: Líder → Debilitándose; trailing del 10/15/20 %; ATR de 22 sesiones × 2/3/4; cada trailing combinado con la órbita; plazos de 13 y 26 semanas. Máximo: 52 semanas. Trailing actualizado al cierre, ejecución en la siguiente apertura.</p>
@@ -144,7 +155,7 @@ export async function mountStrategies(container: HTMLElement) {
     dispose();
     executionDetails = undefined;
     container.innerHTML = `<div class="strategy-intro"><p class="strategy-eyebrow">LABORATORIO DE ÓRBITA</p><h2>¿Qué aportan estos giros?</h2><p>Encuentra la entrada, recorre lo que ocurrió después y comprueba la evidencia.</p></div>
-      <div class="strategy-warning" role="status"><strong>${esc(status())}</strong><p>${(manifest as any).researchRefreshFailed ? 'La actualización de investigación no superó la auditoría. Se conserva el último estudio válido con sus fechas originales.' : manifest.audit.status === 'eligible' ? 'El universo importado supera la auditoría. Consulta los resultados y su incertidumbre.' : 'El estudio de acciones espera un histórico completo. Puedes explorar ya los giros reales de los índices.'}</p></div>
+      <div class="strategy-warning" role="status"><strong>${esc(status())}</strong><p>${manifest.currentCoverage ? `Resultados sobre los componentes actuales, con sesgo de supervivencia declarado. Acciones hasta ${esc(manifest.currentCoverage.latestSession)}. Compara entrenamiento, validación y prueba posterior.` : (manifest as any).researchRefreshFailed ? 'La actualización de investigación no superó la auditoría. Se conserva el último estudio válido con sus fechas originales.' : manifest.audit.status === 'eligible' ? 'El universo importado supera la auditoría. Consulta los resultados y su incertidumbre.' : 'El estudio de acciones espera un histórico completo. Puedes explorar ya los giros reales de los índices.'}</p></div>
       ${toolbar()}<nav class="strategy-tabs" aria-label="Vistas de estrategias">${[['signals', 'Señales'], ['case', 'Caso individual'], ['results', 'Resultados']].map(([id, name]) => `<button data-study-page="${id}" aria-pressed="${state.page === id}">${name}</button>`).join('')}<button id="study-share" class="push-right">Copiar este estudio ↗</button></nav>
       <div id="study-share-status" role="status"></div>${!detail && state.page !== 'results' ? '<section class="strategy-card"><h3>Universo todavía no evaluable</h3><p>Consulta «Cobertura y fuentes» para ver los datos pendientes. Los casos de índices están disponibles en el selector de universo.</p></section>' : content}
       ${coverageMarkup()}${protocolMarkup()}<p class="strategy-note">Última sesión: ${esc(manifest.latestSession)} · Informe: ${esc(manifest.generatedAt.slice(0, 10))}</p>`;
@@ -162,6 +173,15 @@ export async function mountStrategies(container: HTMLElement) {
     container.querySelectorAll<HTMLButtonElement>('[data-study-page]').forEach(b => b.addEventListener('click', async () => { state.page = b.dataset.studyPage as StrategyState['page']; updateUrl(); await render().catch(showError); }));
     container.querySelectorAll<HTMLButtonElement>('[data-case]').forEach(b => b.addEventListener('click', async () => { state.caseId = b.dataset.case!; state.page = 'case'; updateUrl(); await render().catch(showError); }));
     container.querySelector('#study-share')?.addEventListener('click', share);
+    if (state.page === 'results' && currentReport && state.tf === 'weekly') {
+      container.querySelector<HTMLSelectElement>('#study-symbol')!.disabled=true;
+      if(quantControls.mode==='allocation') for(const id of ['study-rule','study-confirm','study-ref','study-strong','study-volume']) {
+        const input=container.querySelector<HTMLInputElement>('#'+id); if(input) input.closest('label')!.hidden=true;
+      }
+      void bindCurrentResults(container,currentReport,quantControls,fetchJson,()=>render().catch(showError),resultCharts,()=>token===requestId&&!container.hidden).catch(error=>{
+        if(token===requestId) {const el=container.querySelector('#quant-curve');if(el)el.textContent=(error as Error).message;}
+      });
+    }
     container.querySelectorAll<HTMLDetailsElement>('[data-result-detail]').forEach(element => {
       let loaded = false;
       element.addEventListener('toggle', async () => {

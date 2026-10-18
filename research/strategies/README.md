@@ -1,5 +1,9 @@
 # Estrategias de Kiko
 
+## Estudio activo: componentes actuales y capital simulado
+
+El usuario ha cambiado expresamente el universo: se incluyen **todos los componentes actuales**, sin exigir empresas ya excluidas. El estudio semanal calcula CAGR, Sharpe, Sortino, caída máxima y carteras con límites, efectivo y costes. Se separan entrenamiento 2010–2018, validación 2019–2022 y prueba posterior desde 2023; además se calcula walk-forward. Reglas, 144 políticas de asignación y límites: [CURRENT_UNIVERSE.md](CURRENT_UNIVERSE.md). El protocolo histórico descrito debajo queda como archivo de la pregunta anterior, sin bloquear el estudio actual.
+
 El objetivo es evaluar cuatro entradas (giro de momentum, giro de fuerza, Rezagado → Mejorando y Mejorando → Líder), manteniendo separados el estudio de eventos y una cartera mecánica de referencia. El protocolo está en `protocol.json`; el motor no recalibra la fórmula RRG para mejorar resultados de trading.
 
 ## Estado comprobado el 18/10/2026

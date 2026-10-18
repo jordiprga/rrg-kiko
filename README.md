@@ -2,7 +2,7 @@
 
 Explorador de fuerza relativa para índices y sectores estadounidenses. Diario/semanal, cuatro cuadrantes, colas de 1–30 periodos, reproducción histórica, zoom, tabla y enlaces compartibles.
 
-La pestaña **Estrategias** detecta los giros y cruces de Kiko y permite abrir casos reales con el futuro oculto. Incluye confirmación de dos periodos, precio/órbita sincronizados, percentiles y nueve zonas exploratorias. El laboratorio incorpora simulación de entradas/salidas y walk-forward en Python, pero el estudio completo del S&P 500 permanece **no evaluable**: faltan datos gratuitos contrastados de sectores históricos y empresas desaparecidas. [Cobertura, comandos, contratos y metodología](research/strategies/README.md).
+La pestaña **Estrategias** estudia los componentes actuales del S&P 500: cuatro entradas, comparación de salidas y 144 políticas de asignación de capital. Incluye CAGR, Sharpe, Sortino, caída máxima, costes, controles SPY/equiponderado y periodos separados de entrenamiento (2010–2018), validación (2019–2022) y test (2023 en adelante), además de walk-forward. El sesgo de supervivencia se declara, sin bloquear esta cohorte actual por faltar empresas excluidas. Se mantienen los casos de índices con el futuro oculto. [Reglas, datos y reproducción](research/strategies/CURRENT_UNIVERSE.md).
 
 **[Abrir Órbita](https://jordiprga.github.io/rrg-kiko/)**
 
