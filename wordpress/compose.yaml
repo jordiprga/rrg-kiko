@@ -1,0 +1,35 @@
+name: inframarinos
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: inframarinos
+      MARIADB_USER: inframarinos
+      MARIADB_PASSWORD: ${WORDPRESS_DB_PASSWORD:?Define WORDPRESS_DB_PASSWORD en .env}
+      MARIADB_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - database:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  wordpress:
+    image: wordpress:php8.3-apache
+    ports:
+      - '127.0.0.1:8080:80'
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: inframarinos
+      WORDPRESS_DB_USER: inframarinos
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD:?Define WORDPRESS_DB_PASSWORD en .env}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - wordpress:/var/www/html
+      - ./inframarinos:/var/www/html/wp-content/themes/inframarinos:ro
+      - ./inframarinos-gestion:/var/www/html/wp-content/plugins/inframarinos-gestion:ro
+volumes:
+  database:
+  wordpress:

@@ -1,0 +1,12 @@
+/*
+Theme Name: Inframarinos
+Theme URI: https://github.com/jordiprga/rrg-kiko/tree/main/wordpress
+Author: Jordi
+Description: Taberna de mercado en una Granada paralela. Diseño de cartel, carta autogestionable e Instagram. Activa el plugin incluido Inframarinos · Gestión del bar para editar los contenidos.
+Version: 1.0.0
+Requires at least: 6.5
+Requires PHP: 7.4
+License: GPL-2.0-or-later
+Text Domain: inframarinos
+*/
+.skip-link{position:absolute;top:-100px;left:20px;padding:14px 20px;background:#173d3b;color:#fff;z-index:99999}.skip-link:focus{top:15px}.bar-notice{padding:20px 6%;background:#173d3b;color:#f3eddf;text-align:center;font-size:14px;line-height:1.8;border-bottom:1px solid #f3eddf55}.menu-tabs{overflow-x:auto;align-items:stretch}.menu-tabs button{flex-shrink:0}.menu-empty{padding:35px 0;line-height:1.8}.dish-copy{flex:1;min-width:0}.dish-photo{width:58px;height:58px;object-fit:cover;border:1px solid #cac7b6}.dish-status{display:inline-block;margin-top:10px;font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:#bf4432}.dish-unavailable .price{color:#6e7265}.price{font-size:20px}.wordpress-content{padding:70px 6%;max-width:1100px;margin:0 auto;min-height:50vh}.wordpress-content h1{font-size:clamp(35px,6vw,72px);overflow-wrap:anywhere}.wordpress-content p{line-height:1.8}.wordpress-content img{max-width:100%;height:auto}.wordpress-content a{text-decoration:underline}.wordmark{max-width:100%;overflow-wrap:anywhere}.hero-copy h1,.instagram-account>strong{overflow-wrap:anywhere}.admin-bar{scroll-padding-top:56px}@media(max-width:620px){.dish{gap:12px}.dish-photo{width:42px;height:42px}.price{font-size:17px}.wordpress-content{padding-block:40px}}

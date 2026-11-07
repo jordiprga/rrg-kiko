@@ -16,6 +16,10 @@ Publicada en https://jordiprga.github.io/rrg-kiko/inframarinos/ desde `public/in
 
 Para reutilizarla en un repositorio independiente, copia esta carpeta a la raíz y activa Settings → Pages → Deploy from a branch → main → / (root).
 
+## Versión autogestionable en WordPress
+
+El código del tema y el plugin de gestión está en [`wordpress/`](../../../wordpress/README.md). El [paquete instalable](https://jordiprga.github.io/rrg-kiko/inframarinos/descargas/inframarinos-wordpress.zip) incluye ambos ZIP y una guía. Permite editar carta, imágenes, textos, horarios, avisos e Instagram desde WordPress, manteniendo el diseño. Requiere un alojamiento WordPress; esta demostración de GitHub Pages sigue siendo estática.
+
 ## Créditos
 
 Fotografía: [Unsplash](https://unsplash.com/photos/005eec06c04b), servida localmente. Tipografías: DM Sans y Playfair Display, de Google Fonts, distribuidas bajo sus licencias SIL Open Font License. Ilustración de la sardina: SVG creado para este proyecto.
