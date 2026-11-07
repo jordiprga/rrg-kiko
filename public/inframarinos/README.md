@@ -4,6 +4,8 @@ Una taberna de otra profundidad, en el Mercado de San Agustín de una Granada pa
 
 Web estática responsive en español, con carta por categorías, selección aleatoria de tapas y un guiño a WordPress y PHP. HTML, CSS y JavaScript sin dependencias de ejecución. Compatible con GitHub Pages y cualquier servidor estático.
 
+El diseño combina una cabecera de periódico, una postal de taberna y un ticket de barra. El banner «Aviso a la parroquia» enlaza entero a [@yordiprga](https://www.instagram.com/yordiprga/), la cuenta provisional de Instagram, que también está disponible en la navegación.
+
 ## Abrir en local
 
 Abrir `index.html` directamente en el navegador o ejecutar `python3 -m http.server 8000` desde este directorio y visitar `http://localhost:8000`.
